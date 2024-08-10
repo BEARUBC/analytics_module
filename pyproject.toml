@@ -8,6 +8,9 @@ packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
+adafruit-blinka = "^8.46.1"
+adafruit-circuitpython-mcp3xxx = "^1.4.17"
+numpy = "^2.0.1"
 
 
 [build-system]
