@@ -1,12 +1,14 @@
 import numpy as np
 import time
 import AdcReader
-
+import scipy
 
 class EmgProcessor:
     INNER_THRESHOLD = 0.1
     OUTER_THRESHOLD = 0.9
     ACTIVATION_STATE = False
+
+
     
     def __init__(self, *args, **kwargs):
         self.INNER_THRESHOLD = kwargs.get('inner_threshold', 0.1)
@@ -32,9 +34,35 @@ class EmgProcessor:
         print("Outer max: ", outer_max_signal)
         return inner_max_signal, outer_max_signal
     
-    def preprocess(self):
-        pass
-    
+    def preprocess(self, signals):
+        # TODO determine values for following parameters
+        # sampling_freq
+        # highpass (for inner and outer)
+        # lowpass (for inner and outer)
+        # smoothing_window = 100
+
+        def bandpass_filter(signal, sampling_freq, highpass_freq, lowpass_freq):
+            b, a = scipy.signal.butter(4, [highpass_freq, lowpass_freq],
+                                       btype='bandpass', fs=sampling_freq)
+            filtered_signal = scipy.signal.filtfilt(b, a, signal)
+            return filtered_signal
+
+        def normalize_and_smooth(signal, window: int, max_value: int) -> np.ndarray:
+            rectified_signal = np.abs(signal)
+            smoothed_signal = np.convolve(rectified_signal, np.ones(window) / window, mode='valid')
+            normalized_signal = smoothed_signal / max_value
+            return normalized_signal
+        inner_signal = signals[0]
+        outer_signal = signals[1]
+        inner_signal = bandpass_filter(inner_signal, sampling_freq = 2000,
+                                       highpass_freq = highpass_inner, lowpass_freq=lowpass_inner)
+        outer_signal = bandpass_filter(outer_signal, sampling_freq=2000,
+                                       highpass_freq=highpass_outer, lowpass_freq=highpass_outer)
+        inner_signal = normalize_and_smooth(inner_signal, smoothing_window, max_value)
+        outer_signal = normalize_and_smooth(outer_signal, smoothing_window, max_value)
+        # TODO implement larger array that contains past signals
+        return inner_signal, outer_signal
+
     def detect_activation(self):
         signal_buffer = AdcReader.get_buffer() # returns a 2d numpy array [[inner_signal], [outer_signal]]
         inner_signal, outer_signal= self.preprocess(signal_buffer)
