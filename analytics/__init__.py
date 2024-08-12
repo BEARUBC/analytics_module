@@ -19,7 +19,9 @@ def initialize_config_and_logging():
     with _init_lock:
         global _config_initialized
         if not _config_initialized: 
+            # Read environment variable overrides in to config
             config.set_env()
+            # Validate that config conforms to template
             config.get(base_config_template)
             LoggerConfig.configure_logging(config["log"], print_log_config_to_stdout=True)
             _config_initialized = True

@@ -1,0 +1,9 @@
+### Default config for all projects
+# print config and exit
+printConfigOnly: no
+
+log:
+  handlers:
+    console_handlers:
+      class: logging.StreamHandler
+      stream: "ext://sys.stdout"

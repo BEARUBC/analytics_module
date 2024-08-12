@@ -49,11 +49,11 @@ class LoggerConfig:
         """
         Set global config based on the given config object. This serves as a thin wrapper around the
         standard `logging.config.dictConfig` method.
-        
+
         :param config: ConfigView corresponding to the LOG_CONFIG_TEMPLATE
         :param print_log_config_to_stdout: Flag indicating whether we should print the logger config to stdout
         """
         config_dict = config.get(LOG_CONFIG_TEMPLATE)
         if print_log_config_to_stdout:
             print(f"Initializing logging with config={json.dumps(config_dict)}")
-        dictConfig(config_dict | {"version": 1})
+        dictConfig({"version": 1})
