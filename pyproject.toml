@@ -16,6 +16,7 @@ pydantic = "^2.8.2"
 prometheus-client = "^0.20.0"
 confuse = "^2.0.1"
 colorlog = "^6.8.2"
+setuptools = "^72.1.0"
 
 
 [build-system]

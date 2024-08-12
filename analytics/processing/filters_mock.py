@@ -1,44 +1,44 @@
 import time
 import logging
-from analytics.adc.reader import AdcReader
 from .constants import INNER_THRESHOLD, OUTER_THRESHOLD, CALIBRATION_DURATION_IN_SECONDS
 from analytics.gpm.client import Client
+from analytics.adc.reader_mock import MockAdcReader
 from analytics.gpm.constants import *
-
+from analytics.common.loggerutils import detail_trace
 
 logger = logging.getLogger(__name__)
 
-class EmgProcessor:
+class MockEmgProcessor:
     def __init__(self, *args, **kwargs):
         self.activation_state = False
-        self.adc_reader = AdcReader()
+        self.adc_reader = MockAdcReader()
         self.gpm_client = Client()
         logger.info("Initialized EMG proccessor")
     
     def calibrate(self):
-        inner_max_signal = float('-inf')
-        outer_max_signal = float('-inf')
-        
-        def calibrate_threshold(duration, message):
-            logger.info(message)
-            end_time = time.time() + duration
+        with detail_trace("ADC signal calibration", logger, log_start=True) as trace_step:
+            inner_max_signal = float('-inf')
+            outer_max_signal = float('-inf')
+            
+            def calibrate_threshold(duration, message):
+                logger.info(message)
+                end_time = time.time() + duration
+                inner_max_signal = float('-inf')
+                outer_max_signal = float('-inf')
+                for reading in self.adc_reader.read():
+                    if time.time() > end_time:
+                        break
+                    inner_signal, outer_signal = reading
+                    inner_max_signal = max(inner_max_signal, inner_signal)
+                    outer_max_signal = max(outer_max_signal, outer_signal)
+                return (inner_max_signal, outer_max_signal)
 
-            for reading in self.adc_reader.read():
-                if time.time() > end_time:
-                    break
-                inner_signal, outer_signal = reading
-                inner_max_signal = max(inner_max_signal, inner_signal)
-                outer_max_signal = max(outer_max_signal, outer_signal)
+            inner_max_signal, outer_max_signal = calibrate_threshold(CALIBRATION_DURATION_IN_SECONDS, f"Starting calibration... Relax arm for {CALIBRATION_DURATION_IN_SECONDS} seconds")
+            inner_max_signal, outer_max_signal = calibrate_threshold(CALIBRATION_DURATION_IN_SECONDS, f"Contract inner arm muscle for {CALIBRATION_DURATION_IN_SECONDS} seconds")
+            inner_max_signal, outer_max_signal = calibrate_threshold(CALIBRATION_DURATION_IN_SECONDS, f"Contract outer arm muscle for {CALIBRATION_DURATION_IN_SECONDS} seconds")
+            trace_step(f"Calibration complete with inner max: {inner_max_signal} and outer max: {outer_max_signal}")
 
-        calibrate_threshold(CALIBRATION_DURATION_IN_SECONDS, "Starting calibration... Relax arm for 3 seconds")
-        calibrate_threshold(CALIBRATION_DURATION_IN_SECONDS, "Contract inner arm muscle")
-        calibrate_threshold(CALIBRATION_DURATION_IN_SECONDS, "Contract outer arm muscle")
-
-        logger.info("Calibration completed")
-        logger.info(f"Inner max: {inner_max_signal}")
-        logger.info(f"Outer max: {outer_max_signal}")
-
-        return inner_max_signal, outer_max_signal
+            return inner_max_signal, outer_max_signal
     
     def preprocess(self, signal):
         # def bandpass_filter(signal, sampling_freq, highpass_freq, lowpass_freq):
@@ -65,9 +65,11 @@ class EmgProcessor:
 
     def detect_activation(self):
         for reading in self.adc_reader.read():
+            logger.info(f"Received ADC signal reading: {reading}")
             inner_signal, outer_signal= self.preprocess(reading)
             if self.activation_state is False:
                 if inner_signal > INNER_THRESHOLD:
+                    logger.info(f"Received inner signal {inner_signal} is greater than threshold {INNER_THRESHOLD}, sending activation command")
                     self.activation_state = True
                     recv = self.gpm_client.send_message(MAESTRO_RESOURCE, MAESTRO_OPEN_FIST)
                     logger.info(f"Received response from GPM; Response={recv}")
@@ -76,3 +78,4 @@ class EmgProcessor:
                     self.activation_state = False
                     recv = self.gpm_client.send_message(MAESTRO_RESOURCE, MAESTRO_CLOSE_FIST)
                     logger.info(f"Received response from GPM; Response={recv}")
+            time.sleep(10)
