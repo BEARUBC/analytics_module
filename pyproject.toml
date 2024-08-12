@@ -13,6 +13,8 @@ adafruit-circuitpython-mcp3xxx = "^1.4.17"
 numpy = "^2.0.1"
 protobuf = "^5.27.3"
 pydantic = "^2.8.2"
+prometheus-client = "^0.20.0"
+confuse = "^2.0.1"
 
 
 [build-system]
