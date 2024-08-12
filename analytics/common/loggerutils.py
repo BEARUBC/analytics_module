@@ -21,7 +21,8 @@ def simple_trace(
     additional: Optional[OrderedDict[str, str]] = None,
 ) -> Generator[None, None, None]:
     """
-    Wraps a block of code and logs information about the timing of the wrapped method.
+    Wraps a block of code and logs information about the timing of the wrapped method
+
     :param msg: Message to log to the given logger
     :param logger: Logger to write to
     :param log_start: Whether to log a message when starting an operation. Defaults to False - generally should only
@@ -56,7 +57,8 @@ def detail_trace(
 ) -> Generator[Callable[[str], None], None, None]:
     """
     Wraps a block of code and logs information about the timing of the wrapped method. This also yields a callable
-    which can be invoked to add more granular timing information (see multitimer_ms)
+    which can be invoked to add more granular timing information (see multitimer_ms).
+
     :param msg: Message to log to the given logger
     :param logger: Logger to write to
     :param log_start: Whether to log a message when starting an operation. Defaults to False - generally should only
@@ -103,7 +105,8 @@ def threshold_trace(
 ) -> Generator[Callable[[str], None], None, None]:
     """
     Similar to detail_trace, but never logs starting messages, and will only log an ending message if the wrapped
-    operation exceeded the specified threshold_ms.
+    operation exceeded the specified threshold_ms
+
     :param msg: Message to log to the given logger
     :param logger: Logger to write to
     :param threshold_ms: Threshold (in milliseconds) at which we should log details if overall operation time exceeds

@@ -22,6 +22,7 @@ class StartAndEnd(BaseModel):
 def timer() -> Generator[Callable[[], float], None, None]:
     """
     Contextmanager function that will return the seconds elapsed since the initial call to timer()
+
     :return: Lambda yielding time elapsed (in seconds) since initial call to timer()
     """
     start = time.perf_counter()
@@ -32,6 +33,7 @@ def timer() -> Generator[Callable[[], float], None, None]:
 def timer_ms() -> Generator[Callable[[], float], None, None]:
     """
     Contextmanager function that will return the milliseconds elapsed since the initial call to timer_ms()
+
     :return: Lambda yielding time elapsed (in milliseconds) since initial call to timer_ms()
     """
     with timer() as t:
@@ -43,6 +45,7 @@ def stopwatch() -> Generator[Callable[[], float], None, None]:
     """
     Contextmanager yielding a lambda that will return the seconds elapsed since either the
     last call to the lambda, or the initial call to stopwatch()
+
     :return: Lambda yielding time elapsed (in seconds) between last invocation and current invocation
     """
     start = time.perf_counter()
@@ -62,6 +65,7 @@ def stopwatch_ms() -> Generator[Callable[[], float], None, None]:
     """
     Contextmanager yielding a lambda that will return the milliseconds elapsed since either the
     last call to the lambda, or the initial call to stopwatch_ms()
+
     :return: Lambda yielding time elapsed (in milliseconds) between last invocation and current invocation
     """
     with stopwatch() as s:
@@ -73,6 +77,7 @@ def multitimer() -> Generator[tuple[Callable[[], float], Callable[[], float]], N
     """
     Contextmanager yielding a union of both timer() and stopwatch(). Useful for instrumenting situations where
     we need both the total elapsed wall-clock time and a more detailed breakdown
+
     :return: (timer() lambda, stopwatch() lambda)
     """
     with timer() as t:
@@ -85,6 +90,7 @@ def multitimer_ms() -> Generator[tuple[Callable[[], float], Callable[[], float]]
     """
     Contextmanager yielding a union of both timer_ms() and stopwatch_ms(). Useful for instrumenting situations where
     we need both the total elapsed wall-clock time and a more detailed breakdown
+
     :return: (timer_ms() lambda, stopwatch_ms() lambda)
     """
     with timer_ms() as t:
@@ -108,6 +114,7 @@ def start_and_end() -> Generator[Callable[[], StartAndEnd], None, None]:
     Contextmanager yielding a function that computes a tuple of:
         * time context manager was entered
         * time of function evaluation
+
     :return: Function yielding a tuple of (start utcnow time, current utcnow time)
     """
     start = datetime.utcnow()

@@ -49,6 +49,7 @@ class LoggerConfig:
         """
         Set global config based on the given config object. This serves as a thin wrapper around the
         standard `logging.config.dictConfig` method.
+        
         :param config: ConfigView corresponding to the LOG_CONFIG_TEMPLATE
         :param print_log_config_to_stdout: Flag indicating whether we should print the logger config to stdout
         """

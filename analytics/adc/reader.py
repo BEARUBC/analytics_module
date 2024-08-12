@@ -21,6 +21,7 @@ class AdcReader:
         ) -> float:
         """
         Read a value from the ADC
+        
         :return: the 10-bit value read from the ADC
         """
         # TODO: add processing to get true value. may need to do some scaling
