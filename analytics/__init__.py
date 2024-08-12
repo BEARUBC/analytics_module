@@ -15,6 +15,19 @@ _config_initialized = False
 _initialized = False
 _init_lock = RLock()
 
+ANALYTICS_ASCII = R"""
+    ___                __      __  _          
+   /   |  ____  ____ _/ /_  __/ /_(_)_________
+  / /| | / __ \/ __ `/ / / / / __/ / ___/ ___/
+ / ___ |/ / / / /_/ / / /_/ / /_/ / /__(__  ) 
+/_/  |_/_/ /_/\__,_/_/\__, /\__/_/\___/____/  
+                     /____/                 
+"""
+NEW_LINE = "\n"
+BYLINE = "Developed at UBC Bionics"
+VERSION_LINE = "Signal processing module for Grasp | Version 0.0.1"
+
+
 def initialize_config_and_logging():
     with _init_lock:
         global _config_initialized
@@ -23,5 +36,9 @@ def initialize_config_and_logging():
             config.set_env()
             # Validate that config conforms to template
             config.get(base_config_template)
-            LoggerConfig.configure_logging(config["log"], print_log_config_to_stdout=True)
+            LoggerConfig.configure_logging(config["log"])
             _config_initialized = True
+            print(ANALYTICS_ASCII)
+            print(VERSION_LINE)
+            print(BYLINE)
+            print(NEW_LINE)

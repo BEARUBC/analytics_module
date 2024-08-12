@@ -3,7 +3,20 @@
 printConfigOnly: no
 
 log:
+  formatters:
+    color_format:
+      class: colorlog.ColoredFormatter
+      format: "%(asctime)s [%(log_color)s%(levelname)s%(reset)s] [%(bold)s%(process)d:%(threadName).12s%(reset)s] %(bold_blue)s%(name)s%(reset)s - %(message)s"
+      style: "%"
+    standard_format:
+      format: "%(asctime)s [%(levelname)s] [%(process)d:%(threadName).12s] %(name)s - %(message)s"
+      style: "%"
   handlers:
-    console_handlers:
+    console_handler:
       class: logging.StreamHandler
+      formatter: color_format
       stream: "ext://sys.stdout"
+  loggers:
+    "":
+      level: INFO
+      handlers: [console_handler]

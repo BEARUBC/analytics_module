@@ -1,5 +1,4 @@
 import json
-import logging
 from logging.config import dictConfig
 
 import confuse
@@ -34,18 +33,18 @@ _log_logger_template = {
 }
 
 LOG_CONFIG_TEMPLATE = {
-    "formatters": confuse.Optional(confuse.MappingValues(dict), None),
-    "filters": confuse.Optional(confuse.MappingValues(dict), None),
-    "handlers": confuse.Optional(confuse.MappingValues(dict), None),
-    "loggers": confuse.Optional(confuse.MappingValues(_log_logger_template), None),
-    "root": confuse.Optional(_log_handler_template, None),
-    "incremental": confuse.Optional(bool, None),
-    "disable_existing_loggers": confuse.Optional(bool, None),
+    "formatters": confuse.Optional(confuse.MappingValues(dict), {}),
+    "filters": confuse.Optional(confuse.MappingValues(dict), {}),
+    "handlers": confuse.Optional(confuse.MappingValues(dict), {}),
+    "loggers": confuse.Optional(confuse.MappingValues(_log_logger_template), {}),
+    "root": confuse.Optional(_log_handler_template, {}),
+    "incremental": confuse.Optional(bool, {}),
+    "disable_existing_loggers": confuse.Optional(bool, {}),
 }
 
 class LoggerConfig:
     @classmethod
-    def configure_logging(cls, config: confuse.ConfigView, print_log_config_to_stdout: bool) -> None:
+    def configure_logging(cls, config: confuse.ConfigView, print_log_config_to_stdout: bool = False) -> None:
         """
         Set global config based on the given config object. This serves as a thin wrapper around the
         standard `logging.config.dictConfig` method.
@@ -55,5 +54,5 @@ class LoggerConfig:
         """
         config_dict = config.get(LOG_CONFIG_TEMPLATE)
         if print_log_config_to_stdout:
-            print(f"Initializing logging with config={json.dumps(config_dict)}")
-        dictConfig({"version": 1})
+            print(f"Initializing logging with config={json.dumps(config_dict | {"version": 1})}")
+        dictConfig(config_dict | {"version": 1})

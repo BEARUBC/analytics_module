@@ -11,7 +11,7 @@ def main():
     start_metrics_server()
     client = Client()
     recv = client.send_message(MAESTRO_RESOURCE, MAESTRO_OPEN_FIST)
-    print(recv)
+    logger.info(f"Received response from GPM; Response={recv}")
 
 if __name__ == "__main__":
     main()
