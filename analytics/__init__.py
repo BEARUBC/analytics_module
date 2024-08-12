@@ -24,7 +24,7 @@ ANALYTICS_ASCII = R"""
                      /____/                 
 """
 NEW_LINE = "\n"
-BYLINE = "Developed at UBC Bionics"
+BYLINE = "Developed at UBC Bionics (http://www.ubcbionics.com)"
 VERSION_LINE = "Signal processing module for Grasp | Version 0.0.1"
 
 
