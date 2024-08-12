@@ -5,7 +5,7 @@ from collections.abc import Callable, Generator
 from logging import Logger
 from typing import Optional
 
-from common.timeutils import TimerStats, multitimer_ms, timer_ms
+from analytics.common.timeutils import TimerStats, multitimer_ms, timer_ms
 
 
 def log_params(**kwargs) -> OrderedDict[str, str]:

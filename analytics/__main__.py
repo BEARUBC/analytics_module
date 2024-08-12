@@ -1,1 +1,3 @@
-print("Welcome to the analytics module -- this is a work in progress...but if you are seeing this you got everything setup corectly!")
+from analytics.gpm.client import Client
+
+client = Client()
