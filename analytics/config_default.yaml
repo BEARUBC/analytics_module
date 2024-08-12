@@ -1,6 +1,4 @@
 ### Default config for all projects
-# print config and exit
-printConfigOnly: no
 
 log:
   formatters:

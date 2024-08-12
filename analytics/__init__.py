@@ -4,8 +4,7 @@ from threading import RLock
 from analytics.common.logging import LOG_CONFIG_TEMPLATE, LoggerConfig
 
 base_config_template = {
-    "log": LOG_CONFIG_TEMPLATE,
-    "printConfigOnly": bool,
+    "log": LOG_CONFIG_TEMPLATE
 }
 
 config = confuse.LazyConfig(__name__, __name__)
@@ -27,6 +26,11 @@ NEW_LINE = "\n"
 BYLINE = "Developed at UBC Bionics (http://www.ubcbionics.com)"
 VERSION_LINE = "Signal processing module for Grasp | Version 0.0.1"
 
+def print_module_info():
+    print(ANALYTICS_ASCII)
+    print(VERSION_LINE)
+    print(BYLINE)
+    print(NEW_LINE)
 
 def initialize_config_and_logging():
     with _init_lock:
@@ -38,7 +42,4 @@ def initialize_config_and_logging():
             config.get(base_config_template)
             LoggerConfig.configure_logging(config["log"])
             _config_initialized = True
-            print(ANALYTICS_ASCII)
-            print(VERSION_LINE)
-            print(BYLINE)
-            print(NEW_LINE)
+            print_module_info()
