@@ -3,14 +3,14 @@ This is the main analytics module. It serves as the "brain" of the arm in the se
 
 ## Installation
 ```bash
-// Install poetry -- follow the instructions here: https://python-poetry.org/docs/#installation
-// Clone the repository
+# Install poetry -- follow the instructions here: https://python-poetry.org/docs/#installation
+# Clone the repository
 git clone https://github.com/BEARUBC/analytics_module.git
 
 cd <REPOSITORY>
 poetry install
 
-// Finally, start the analytics module
+# Finally, start the analytics module
 poetry run python -m analytics
 ```
 
