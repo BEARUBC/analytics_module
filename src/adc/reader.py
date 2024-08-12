@@ -5,7 +5,8 @@ import busio
 import digitalio
 
 class AdcReader:
-    """A class for reading values from the MCP3008 ADC
+    """
+    A class for reading values from the MCP3008 ADC using SPI
     """
     def init(
             self,
@@ -18,10 +19,9 @@ class AdcReader:
     def read(
         self
         ) -> float:
-        """Read a value from the ADC
-
-        Returns:
-            float: the 10-bit value read from the ADC
+        """
+        Read a value from the ADC
+        :return: the 10-bit value read from the ADC
         """
         # TODO: add processing to get true value. may need to do some scaling
         return self._chan0.value
