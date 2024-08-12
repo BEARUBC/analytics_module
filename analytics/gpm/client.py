@@ -31,9 +31,9 @@ class Client():
             # prefix (64-bit) length to the protobuf frame to enable streaming
             buf_len = len(buf).to_bytes(PREFIX_LENGTH_SIZE)
             self.socket.sendall(buf_len + buf)
-            trace_step("Sent message")
+            trace_step("sent_message")
             data = self.recv()
-            trace_step("Received response")
+            trace_step("received_response")
             return data
         
     def recv(self, num_bytes = READ_BUF_SIZE) -> bytes:
