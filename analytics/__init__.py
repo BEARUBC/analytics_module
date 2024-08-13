@@ -28,7 +28,7 @@ NEW_LINE = "\n"
 BYLINE = "Developed at UBC Bionics (http://www.ubcbionics.com)"
 VERSION_LINE = "Signal processing module for Grasp | Version 0.0.1"
 
-def print_module_info():
+def _print_module_info():
     print(ANALYTICS_ASCII)
     print(VERSION_LINE)
     print(BYLINE)
@@ -44,4 +44,4 @@ def initialize_config_and_logging():
             config.get(base_config_template)
             LoggerConfig.configure_logging(config["log"])
             _config_initialized = True
-            print_module_info()
+            _print_module_info()

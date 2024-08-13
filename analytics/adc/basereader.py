@@ -24,8 +24,8 @@ class BaseAdcReader(ABC):
         Notice that since we are using a `CircularList` type, the buffer size remains constant
         and old enough values get discarded.
         """
-        inner_adc_value = self.read_adc(self._chan0)
-        outer_adc_value = self.read_adc(self._chan1)
+        inner_adc_value = self._read_adc(self._chan0)
+        outer_adc_value = self._read_adc(self._chan1)
         while True:            
             self.inner_buf.append(next(inner_adc_value))
             self.outer_buf.append(next(outer_adc_value))
@@ -33,7 +33,7 @@ class BaseAdcReader(ABC):
             time.sleep(2)       
     
     @abstractmethod
-    def read_adc(self, channel) -> Generator[float, None, None]:
+    def _read_adc(self, channel) -> Generator[float, None, None]:
         None
 
     def get_current_buffers(self):

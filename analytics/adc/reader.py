@@ -22,6 +22,6 @@ class AdcReader(BaseAdcReader):
         # create an Ananlog input channel on pin 0
         self._chan1 = AnalogIn(mcp, MCP.P1)
 
-    def read_adc(self, channel) -> Generator[float, None, None]:
+    def _read_adc(self, channel) -> Generator[float, None, None]:
         while True:
             yield channel.value
