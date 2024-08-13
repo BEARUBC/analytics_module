@@ -23,6 +23,7 @@ poetry run python -m analytics
 ```
 analytics/
 ├─ adc/          -> Handles communication with ADC (MCP3008) over SPI
+├─ configs/      -> Defines configurable properties for each module
 ├─ common/       -> Common logging utilities and other useful methods
 ├─ gpm/          -> Handles communication with GPM over TCP 
 ├─ metrics/      -> Exposes custom Prometheus endpoint for monitoring
