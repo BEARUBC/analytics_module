@@ -1,5 +1,8 @@
 import numpy as np
 
+class InvalidSize(Exception):
+    pass
+
 class CircularList(object):
     """
     A simple implementation of a circular list. We primarily use this to buffer data in way 
@@ -8,6 +11,8 @@ class CircularList(object):
     entire buffer).
     """
     def __init__(self, size, data = []):
+        if size <= 0:
+            raise InvalidSize("A list cannot have a negative or zero size.")
         self.index = 0
         self.size = size
         self._data = list(data)[-size:]
