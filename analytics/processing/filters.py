@@ -3,7 +3,7 @@ import time
 import logging
 import scipy
 from analytics.adc.mockreader import MockAdcReader
-from analytics.gpm.client import Client
+from analytics.gpm.client import Client, GpmOfflineError
 from analytics.processing.constants import INNER_THRESHOLD, OUTER_THRESHOLD, CALIBRATION_DURATION_IN_SECONDS
 from analytics.common.loggerutils import detail_trace
 from analytics.gpm.constants import *
@@ -13,7 +13,11 @@ logger = logging.getLogger(__name__)
 class EmgProcessor:    
     def __init__(self, adc_reader: MockAdcReader):
         self.adc_reader = adc_reader
-        self.gpm_client = Client()
+        try:
+            self.gpm_client = Client()
+        except GpmOfflineError as e:
+            logger.error(f"Failed to connect to GPM because of error={e}")
+            self.gpm_client = None
         self.activation_state = False
         self.inner_threshold=INNER_THRESHOLD
         self.outer_threshold=OUTER_THRESHOLD
@@ -85,10 +89,17 @@ class EmgProcessor:
                     if max_inner > self.inner_threshold:
                         logger.info(f"Receievd inner_signal={max_inner} greater than inner_threshold={self.inner_threshold}, sending activation.")
                         self.activation_state = True
-                        self.gpm_client.send_message(MAESTRO_RESOURCE, MAESTRO_OPEN_FIST)
+                        if self.gpm_client is not None:
+                            self.gpm_client.send_message(MAESTRO_RESOURCE, MAESTRO_OPEN_FIST)
+                        else:
+                            logger.error("GPM connection failed earlier -- cannot send activation command to Grasp.")
+
                 else:
                     if max_outer > self.outer_threshold:
                         logger.info(f"Receievd outer_signal={max_outer} greater than outer_threshold={self.outer_threshold}, sending de-activation.")
                         self.activation_state = False
-                        self.gpm_client.send_message(MAESTRO_RESOURCE, MAESTRO_CLOSE_FIST)
+                        if self.gpm_client is not None:
+                            self.gpm_client.send_message(MAESTRO_RESOURCE, MAESTRO_CLOSE_FIST)
+                        else:
+                            logger.error("GPM connection failed earlier -- cannot send deactivation command to Grasp.")
             time.sleep(10)

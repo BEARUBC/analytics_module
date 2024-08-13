@@ -7,6 +7,9 @@ from analytics.common.loggerutils import detail_trace
 
 logger = logging.getLogger(__name__)
 
+class GpmOfflineError(Exception):
+    pass
+
 class Client():
     """
     A simple class to manage the TCP connection to the GPM module and provide an easy-to-use
@@ -15,8 +18,11 @@ class Client():
     def __init__(self):
         self.config = config["gpm"]
         logger.info(f"GPM client configs: {self.config}")
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((self.config["host"].as_str(), self.config["port"].as_number()))
+        try:
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.connect((self.config["host"].as_str(), self.config["port"].as_number()))
+        except ConnectionRefusedError:
+            raise GpmOfflineError("Connection refused. Is GPM up and running?")
         self.READ_BUFFER_SIZE = self.config["read_buffer_size"].as_number()
 
     def send_message(self, resource: str, task_code: str):
