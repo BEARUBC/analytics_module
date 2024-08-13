@@ -1,3 +1,5 @@
+import numpy as np
+
 class CircularList(object):
     def __init__(self, size, data = []):
         self.index = 0
@@ -22,3 +24,6 @@ class CircularList(object):
     
     def __len__(self):
         return self.size
+    
+    def __array__(self) -> np.ndarray:
+        return np.array(self._data[self.index:] + self._data[:self.index])
