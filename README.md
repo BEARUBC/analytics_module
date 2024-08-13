@@ -7,6 +7,11 @@ This is the main analytics module. It serves as the "brain" of the arm in the se
 # Clone the repository
 git clone https://github.com/BEARUBC/analytics_module.git
 
+# Run the following commands to initialize the `sgcp` submodule
+git submodule init
+git submodule update
+
+# Install dependencies
 cd <REPOSITORY>
 poetry install
 
