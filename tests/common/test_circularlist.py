@@ -48,6 +48,14 @@ def test_np_array():
     for i in range(size):
         assert np_array[i] == i   
 
+    # Internally, this is now [3,1,2] -- when we convert
+    # to a `np.ndarray`, we want to preserve linearity in 
+    # the times items were added (i.e oldest -> newest)
+    clist.append(3)
+    np_array = np.array(clist)
+    for i in range(size):
+        assert np_array[i] == i+1
+
 
 
 
