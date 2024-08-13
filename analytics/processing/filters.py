@@ -1,7 +1,7 @@
 import numpy as np
 import time
 import logging
-# import scipy
+import scipy
 from analytics.adc.mock_reader import MockAdcReader
 from analytics.gpm.client import Client
 from analytics.processing.constants import INNER_THRESHOLD, OUTER_THRESHOLD, CALIBRATION_DURATION_IN_SECONDS
@@ -47,17 +47,17 @@ class EmgProcessor:
         # lowpass (for inner and outer)
         # smoothing_window = 100
 
-        # def bandpass_filter(signal, sampling_freq, highpass_freq, lowpass_freq):
-        #     b, a = scipy.signal.butter(4, [highpass_freq, lowpass_freq],
-        #                                btype='bandpass', fs=sampling_freq)
-        #     filtered_signal = scipy.signal.filtfilt(b, a, signal)
-        #     return filtered_signal
+        def bandpass_filter(signal, sampling_freq, highpass_freq, lowpass_freq):
+            b, a = scipy.signal.butter(4, [highpass_freq, lowpass_freq],
+                                       btype='bandpass', fs=sampling_freq)
+            filtered_signal = scipy.signal.filtfilt(b, a, signal)
+            return filtered_signal
 
-        # def normalize_and_smooth(signal, window: int, max_value: int) -> np.ndarray:
-        #     rectified_signal = np.abs(signal)
-        #     smoothed_signal = np.convolve(rectified_signal, np.ones(window) / window, mode='valid')
-        #     normalized_signal = smoothed_signal / max_value
-        #     return normalized_signal
+        def normalize_and_smooth(signal, window: int, max_value: int) -> np.ndarray:
+            rectified_signal = np.abs(signal)
+            smoothed_signal = np.convolve(rectified_signal, np.ones(window) / window, mode='valid')
+            normalized_signal = smoothed_signal / max_value
+            return normalized_signal
         
         inner_signal = signals[0]
         outer_signal = signals[1]
@@ -69,10 +69,11 @@ class EmgProcessor:
         #                                highpass_freq=highpass_outer, lowpass_freq=highpass_outer)
         # inner_signal = normalize_and_smooth(inner_signal, smoothing_window, max_value)
         # outer_signal = normalize_and_smooth(outer_signal, smoothing_window, max_value)
+
         # TODO implement larger array that contains past signals
         return inner_signal, outer_signal
 
-    def detect_activation(self):
+    def run_detect_activation_loop(self):
         while True:
             with detail_trace("Processing signals", logger, log_start=True) as trace_step:
                 signal_buffer = self.adc_reader.get_current_buffers() # returns a 2d numpy array [[inner_signal], [outer_signal]]
