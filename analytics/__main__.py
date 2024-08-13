@@ -2,7 +2,7 @@ import analytics
 import logging
 from analytics.gpm.constants import *
 from analytics.metrics.exporter import start_metrics_server
-from analytics.adc.mock_reader import MockAdcReader
+from analytics.adc.mockreader import MockAdcReader
 from analytics.processing.filters import EmgProcessor
 from threading import Thread
 

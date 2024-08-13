@@ -1,7 +1,8 @@
 import socket
 import logging
 import analytics.protobuf.sgcp_pb2 as sgcp
-from analytics.gpm.constants import GPM_HOST, GPM_PORT, READ_BUF_SIZE, PREFIX_LENGTH_SIZE
+from analytics import config
+from analytics.gpm.constants import PREFIX_LENGTH_SIZE
 from analytics.common.loggerutils import detail_trace
 
 logger = logging.getLogger(__name__)
@@ -12,8 +13,11 @@ class Client():
     interface to create requests from the SGCP proto definitions and decode GPM responses
     """
     def __init__(self):
+        self.config = config["gpm"]
+        logger.info(f"GPM client configs: {self.config}")
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((GPM_HOST, GPM_PORT))
+        self.socket.connect((self.config["host"].as_str(), self.config["port"].as_number()))
+        self.READ_BUFFER_SIZE = self.config["read_buffer_size"].as_number()
 
     def send_message(self, resource: str, task_code: str):
         """
@@ -36,13 +40,15 @@ class Client():
             trace_step("received_response")
             return data
         
-    def recv(self, num_bytes = READ_BUF_SIZE) -> bytes:
+    def recv(self, num_bytes=None) -> bytes:
         """
         Reads num_bytes from underlying TCP stream. This is a blocking function and will wait until 
         some data is available to be read.
 
         :param num_bytes: Number of bytes to be read from socket
         """
+        if num_bytes is None:
+            num_bytes = self.READ_BUFFER_SIZE
         return self.socket.recv(num_bytes)
     
     def close(self):

@@ -2,7 +2,7 @@ import numpy as np
 import time
 import logging
 import scipy
-from analytics.adc.mock_reader import MockAdcReader
+from analytics.adc.mockreader import MockAdcReader
 from analytics.gpm.client import Client
 from analytics.processing.constants import INNER_THRESHOLD, OUTER_THRESHOLD, CALIBRATION_DURATION_IN_SECONDS
 from analytics.common.loggerutils import detail_trace
@@ -91,5 +91,4 @@ class EmgProcessor:
                         logger.info(f"Receievd outer_signal={max_outer} greater than outer_threshold={self.outer_threshold}, sending de-activation.")
                         self.activation_state = False
                         self.gpm_client.send_message(MAESTRO_RESOURCE, MAESTRO_CLOSE_FIST)
-                trace_step("Processed and sent command to GPM")
             time.sleep(10)

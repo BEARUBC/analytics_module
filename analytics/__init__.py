@@ -1,17 +1,19 @@
 import logging
 import confuse
 from threading import RLock
-from analytics.common.logging import LOG_CONFIG_TEMPLATE, LoggerConfig
+from analytics.configs import LOG_CONFIG_TEMPLATE, GPM_CLIENT_CONFIG_TEMPLATE, ADC_CONFIG_TEMPLATE, METRICS_CONFIG_TEMPLATE, LoggerConfig
 
 base_config_template = {
-    "log": LOG_CONFIG_TEMPLATE
+    "log": LOG_CONFIG_TEMPLATE,
+    "gpm": GPM_CLIENT_CONFIG_TEMPLATE,
+    "adc": ADC_CONFIG_TEMPLATE,
+    "metrics": METRICS_CONFIG_TEMPLATE
 }
 
 config = confuse.LazyConfig(__name__, __name__)
 logging = logging.getLogger(__name__)
 
 _config_initialized = False
-_initialized = False
 _init_lock = RLock()
 
 ANALYTICS_ASCII = R"""

@@ -1,6 +1,12 @@
 import numpy as np
 
 class CircularList(object):
+    """
+    A simple implementation of a circular list. We primarily use this to buffer data in way 
+    that allows us to use fixed-size buffers with efficient handling of the case when the
+    buffer is full (i.e discarding oldest data without having to reallocate or traverse the
+    entire buffer).
+    """
     def __init__(self, size, data = []):
         self.index = 0
         self.size = size
@@ -26,4 +32,8 @@ class CircularList(object):
         return self.size
     
     def __array__(self) -> np.ndarray:
+        """
+        This method is needed to satisfy the `array-like` bound required by the 
+        `np.array` method.
+        """
         return np.array(self._data[self.index:] + self._data[:self.index])
