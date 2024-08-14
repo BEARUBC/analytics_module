@@ -5,6 +5,7 @@ import scipy
 from analytics.adc.mockreader import MockAdcReader
 from analytics.gpm.client import Client, GpmOfflineError
 from analytics.processing.constants import INNER_THRESHOLD, OUTER_THRESHOLD, CALIBRATION_DURATION_IN_SECONDS
+from analytics.adc.visualization import plot_emg_data
 from analytics.common.loggerutils import detail_trace
 from analytics.gpm.constants import *
 
@@ -81,10 +82,11 @@ class EmgProcessor:
         while True:
             with detail_trace("Processing signals", logger, log_start=True) as trace_step:
                 signal_buffer = self.adc_reader.get_current_buffers() # returns a 2d numpy array [[inner_signal], [outer_signal]]
+                plot_emg_data(signal_buffer)
                 trace_step("Read signal buffer")
                 inner_signal, outer_signal = self.preprocess(signal_buffer)
-                max_inner = np.max(inner_signal)
-                max_outer = np.max(outer_signal)
+                max_inner = np.max(inner_signal) if len(inner_signal) != 0 else 0 
+                max_outer = np.max(outer_signal) if len(outer_signal) != 0 else 0
                 if self.activation_state is False:
                     if max_inner > self.inner_threshold:
                         logger.info(f"Receievd inner_signal={max_inner} greater than inner_threshold={self.inner_threshold}, sending activation.")
@@ -102,4 +104,4 @@ class EmgProcessor:
                             self.gpm_client.send_message(MAESTRO_RESOURCE, MAESTRO_CLOSE_FIST)
                         else:
                             logger.error("GPM connection failed earlier -- cannot send deactivation command to Grasp.")
-            time.sleep(10)
+            time.sleep(5)

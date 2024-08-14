@@ -26,11 +26,11 @@ class BaseAdcReader(ABC):
         """
         inner_adc_value = self._read_adc(self._chan0)
         outer_adc_value = self._read_adc(self._chan1)
+        logger.info("Starting to read ADC values for both inner and outer muscles.")
         while True:            
             self.inner_buf.append(next(inner_adc_value))
-            self.outer_buf.append(next(outer_adc_value))
-            logger.info("Read successfully from ADC.")
-            time.sleep(2)       
+            self.outer_buf.append(next(outer_adc_value)) 
+            time.sleep(0.1)      
     
     @abstractmethod
     def _read_adc(self, channel) -> Generator[float, None, None]:
