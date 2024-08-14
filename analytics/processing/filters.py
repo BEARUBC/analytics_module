@@ -5,7 +5,6 @@ import scipy
 from analytics.adc.mockreader import MockAdcReader
 from analytics.gpm.client import Client, GpmOfflineError
 from analytics.processing.constants import INNER_THRESHOLD, OUTER_THRESHOLD, CALIBRATION_DURATION_IN_SECONDS
-from analytics.adc.visualization import plot_emg_data
 from analytics.common.loggerutils import detail_trace
 from analytics.gpm.constants import *
 
@@ -82,7 +81,7 @@ class EmgProcessor:
         while True:
             with detail_trace("Processing signals", logger, log_start=True) as trace_step:
                 signal_buffer = self.adc_reader.get_current_buffers() # returns a 2d numpy array [[inner_signal], [outer_signal]]
-                plot_emg_data(signal_buffer)
+                # plot_emg_data(signal_buffer)
                 trace_step("Read signal buffer")
                 inner_signal, outer_signal = self.preprocess(signal_buffer)
                 max_inner = np.max(inner_signal) if len(inner_signal) != 0 else 0 

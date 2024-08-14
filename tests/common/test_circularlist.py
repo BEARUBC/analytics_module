@@ -55,7 +55,3 @@ def test_np_array():
     np_array = np.array(clist)
     for i in range(size):
         assert np_array[i] == i+1
-
-
-
-
