@@ -2,9 +2,7 @@ import json
 import confuse
 from logging.config import dictConfig
 
-### This file contains source to parse logging config and apply them 
-### to the logger
-
+### This file defines config options for application-wide `logger`
 
 _log_handler_template = {
     "class": str,

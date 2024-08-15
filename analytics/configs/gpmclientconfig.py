@@ -1,6 +1,6 @@
 import confuse
 
-### This file contains source to parse GPM client configs
+### This file defines config options for the `gpm` module
 
 GPM_CLIENT_CONFIG_TEMPLATE = {
     "host": confuse.Optional(str, "127.0.0.1"),

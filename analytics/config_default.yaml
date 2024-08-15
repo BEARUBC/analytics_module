@@ -1,4 +1,17 @@
 ### Default config for all projects
+gpm:
+  host: "127.0.0.1"
+  port: 4760
+  read_buffer_size: 1024
+adc:
+  inner_read_buffer_size: 2000
+  outer_read_buffer_size: 2000
+  mock_reader_state_buffer_size: 100
+  sleep_between_reads_in_seconds: 0.1
+processing:
+  sleep_between_processing_in_seconds: 5
+metrics:
+  port: 9998
 log:
   formatters:
     color_format:
@@ -17,12 +30,3 @@ log:
     "":
       level: INFO
       handlers: [console_handler]
-gpm:
-  host: "127.0.0.1"
-  port: 4760
-  read_buffer_size: 1024
-adc:
-  inner_read_buffer_size: 2000
-  outer_read_buffer_size: 2000
-metrics:
-  port: 9998

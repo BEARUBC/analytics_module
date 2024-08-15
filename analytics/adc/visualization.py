@@ -12,7 +12,7 @@ class EmgVisualizer:
         logger.info("Initializing visualization.")
         self.adc_reader = adc_reader
         self.buffers = adc_reader.get_current_buffers()
-        self.anim = FuncAnimation(plt.gcf(), self._update, interval=1000)
+        self.anim = FuncAnimation(plt.gcf(), self._update, interval=1000, cache_frame_data=False)
         self._update_emg_data_plot()
         plt.tight_layout()
         plt.show()

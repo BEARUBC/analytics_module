@@ -15,6 +15,7 @@ class BaseAdcReader(ABC):
         logger.info(f"ADC reader configs: {self.config}")
         self.inner_buf = CircularList(self.config["inner_read_buffer_size"].as_number())
         self.outer_buf = CircularList(self.config["outer_read_buffer_size"].as_number())
+        self._sleep_duration = self.config["sleep_between_reads_in_seconds"].as_number()
         self._chan0 = None
         self._chan1 = None
 
@@ -30,7 +31,7 @@ class BaseAdcReader(ABC):
         while True:            
             self.inner_buf.append(next(inner_adc_value))
             self.outer_buf.append(next(outer_adc_value)) 
-            time.sleep(0.1)      
+            time.sleep(self._sleep_duration)      
     
     @abstractmethod
     def _read_adc(self, channel) -> Generator[float, None, None]:

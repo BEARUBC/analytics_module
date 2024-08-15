@@ -7,6 +7,7 @@ from analytics.gpm.client import Client, GpmOfflineError
 from analytics.processing.constants import INNER_THRESHOLD, OUTER_THRESHOLD, CALIBRATION_DURATION_IN_SECONDS
 from analytics.common.loggerutils import detail_trace
 from analytics.gpm.constants import *
+from analytics import config
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,9 @@ class EmgProcessor:
         self.activation_state = False
         self.inner_threshold=INNER_THRESHOLD
         self.outer_threshold=OUTER_THRESHOLD
+        self.config = config["processing"]
+        logger.info(f"Processing module configs: {self.config}")
+        self._sleep_duration = self.config["sleep_between_processing_in_seconds"].as_number()
     
     def calibrate(self):
         def calibrate_threshold(duration, message):
@@ -79,16 +83,15 @@ class EmgProcessor:
 
     def run_detect_activation_loop(self):
         while True:
-            with detail_trace("Processing signals", logger, log_start=True) as trace_step:
+            with detail_trace("Processing signals", logger, log_start=False) as trace_step:
                 signal_buffer = self.adc_reader.get_current_buffers() # returns a 2d numpy array [[inner_signal], [outer_signal]]
-                # plot_emg_data(signal_buffer)
                 trace_step("Read signal buffer")
                 inner_signal, outer_signal = self.preprocess(signal_buffer)
                 max_inner = np.max(inner_signal) if len(inner_signal) != 0 else 0 
                 max_outer = np.max(outer_signal) if len(outer_signal) != 0 else 0
                 if self.activation_state is False:
                     if max_inner > self.inner_threshold:
-                        logger.info(f"Receievd inner_signal={max_inner} greater than inner_threshold={self.inner_threshold}, sending activation.")
+                        logger.info(f"Received inner_signal={max_inner} greater than inner_threshold={self.inner_threshold}, sending activation.")
                         self.activation_state = True
                         if self.gpm_client is not None:
                             self.gpm_client.send_message(MAESTRO_RESOURCE, MAESTRO_OPEN_FIST)
@@ -97,10 +100,10 @@ class EmgProcessor:
 
                 else:
                     if max_outer > self.outer_threshold:
-                        logger.info(f"Receievd outer_signal={max_outer} greater than outer_threshold={self.outer_threshold}, sending de-activation.")
+                        logger.info(f"Received outer_signal={max_outer} greater than outer_threshold={self.outer_threshold}, sending de-activation.")
                         self.activation_state = False
                         if self.gpm_client is not None:
                             self.gpm_client.send_message(MAESTRO_RESOURCE, MAESTRO_CLOSE_FIST)
                         else:
                             logger.error("GPM connection failed earlier -- cannot send deactivation command to Grasp.")
-            time.sleep(5)
+            time.sleep(self._sleep_duration)
