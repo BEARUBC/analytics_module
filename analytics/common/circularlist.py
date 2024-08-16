@@ -13,28 +13,26 @@ class CircularList(object):
     def __init__(self, max_size, data = []):
         if max_size <= 0:
             raise InvalidSize("A list cannot have a negative or zero maximum size.")
-        self._start = 0
+        self._start = len(data) if len(data) < max_size else 0
         self._max_size = max_size
         self._data = list(data)[-max_size:]
 
     def append(self, value) -> None:
-        if len(self._data) == self._max_size:
+        try:
             self._data[self._start] = value
-        else:
+        except IndexError as E:
             self._data.append(value)
-        self._start = (self._start + 1) % self._max_size
+        finally:
+            self._start = (self._start + 1) % self._max_size
 
     def __getitem__(self, key):
-        if len(self._data) == self._max_size:
-            return(self._data[(key + self._start) % self._max_size])
-        else:
-            return(self._data[key])
+        return(self._data[(key + self._start) % len(self._data)])
 
     def __repr__(self):        
         return (self._data[self._start:] + self._data[:self._start]).__repr__() + ' (' + str(len(self._data))+'/{} items)'.format(self._max_size)
     
     def __len__(self):
-        return self._max_size
+        return len(self._data)
     
     def __array__(self) -> np.ndarray:
         """
