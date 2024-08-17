@@ -15,8 +15,8 @@ class MockAdcReader(BaseAdcReader):
         self._buffer_size = self.config["mock_reader_state_buffer_size"].as_number()
     
     def _read_adc(self, channel) -> Generator[float, None, None]:
-        burst = np.random.uniform(0, 1, size=self._buffer_size)
-        quiet = np.random.uniform(0, 0.05, size=self._buffer_size)
+        burst = np.random.uniform(-1, 1, size=self._buffer_size)
+        quiet = np.random.uniform(-0.05, 0.05, size=self._buffer_size)
         mock_emg_actions = {
             "activated": burst,
             "resting": quiet
