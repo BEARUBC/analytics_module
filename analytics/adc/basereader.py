@@ -48,5 +48,5 @@ class BaseAdcReader(ABC):
         """Get current state of buffers, converted to an numpy Array"""
         inner, outer = self.inner_buf, self.outer_buf
         if (not inner.is_full() or not outer.is_full()):
-            raise BufferNotFull("One of the buffers is not full yet")
+            raise BufferNotFull("At least one of the buffers is not full yet")
         return (np.array(inner), np.array(outer))
