@@ -5,17 +5,23 @@ from typing import Generator
 from analytics import config
 import numpy as np
 from abc import ABC, abstractmethod
+from analytics.common.backoff import exponential_backoff_decorator
 
 logger = logging.getLogger(__name__)
+
+class BufferNotFull(Exception):
+    pass
 
 class BaseAdcReader(ABC):
     """Base class encapsulating shared logic for the real and mock ADC readers"""
     def __init__(self):
         self.config = config["adc"]
         logger.info(f"ADC reader configs: {self.config}")
-        self.inner_buf = CircularList(self.config["inner_read_buffer_size"].as_number())
-        self.outer_buf = CircularList(self.config["outer_read_buffer_size"].as_number())
+        self._inner_read_buffer_size = self.config["inner_read_buffer_size"].as_number()
+        self._outer_read_buffer_size = self.config["outer_read_buffer_size"].as_number()
         self._sleep_duration = self.config["sleep_between_reads_in_seconds"].as_number()
+        self.inner_buf = CircularList(self._inner_read_buffer_size)
+        self.outer_buf = CircularList(self._outer_read_buffer_size)
         self._chan0 = None
         self._chan1 = None
 
@@ -37,9 +43,10 @@ class BaseAdcReader(ABC):
     def _read_adc(self, channel) -> Generator[float, None, None]:
         None
 
+    @exponential_backoff_decorator(base_delay_in_seconds=0.1, logger=logger)
     def get_current_buffers(self):
         """Get current state of buffers, converted to an numpy Array"""
-        inner = self.inner_buf 
-        outer = self.outer_buf
+        inner, outer = self.inner_buf, self.outer_buf
+        if (not inner.is_full() or not outer.is_full()):
+            raise BufferNotFull("At least one of the buffers is not full yet")
         return (np.array(inner), np.array(outer))
-

@@ -23,7 +23,7 @@ class MockAdcReader(BaseAdcReader):
         }
         while True:
             current_action = random.choice(list(mock_emg_actions))
-            logger.info(f"Pilot's {channel} is currently in state={current_action}")
+            # logger.info(f"Pilot's {channel} is currently in state={current_action}")
             for i in mock_emg_actions[current_action]:
                 yield i
 
