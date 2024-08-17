@@ -54,6 +54,7 @@ class EmgProcessor:
         # highpass (for inner and outer)
         # lowpass (for inner and outer)
         # smoothing_window = 100
+        # notch_filter = True # if we decide to use the notch filter
 
         def bandpass_filter(signal, sampling_freq, highpass_freq, lowpass_freq):
             b, a = scipy.signal.butter(4, [highpass_freq, lowpass_freq],
@@ -66,15 +67,28 @@ class EmgProcessor:
             smoothed_signal = np.convolve(rectified_signal, np.ones(window) / window, mode='valid')
             normalized_signal = smoothed_signal / max_value
             return normalized_signal
-        
+
+        def notch_filter(signal, sampling_freq, f0, Q):
+            if f0 > sampling_freq / 2:
+                raise Exception("notch frequency must be less than or equal to fs/2 (f0 <= fs/2")
+            b, a = scipy.signal.iirnotch(f0, Q, sampling_freq)
+            notched_filtered_data = scipy.signal.filtfilt(b, a, signal)
+            return notched_filtered_data
+
         inner_signal = signals[0]
         outer_signal = signals[1]
 
         # TODO see note at the beginning of this method definition
+        #
+
+
         # inner_signal = bandpass_filter(inner_signal, sampling_freq = 2000,
         #                                highpass_freq = highpass_inner, lowpass_freq=lowpass_inner)
         # outer_signal = bandpass_filter(outer_signal, sampling_freq=2000,
         #                                highpass_freq=highpass_outer, lowpass_freq=highpass_outer)
+        # if notch_filter:
+        #   inner_signal = notch_filter(inner_signal, sampling_freq = 2000, f0 = 850, Q = 17)
+        #   outer_signal = notch_filter(outer_signal, sampling_freq = 2000, f0 = 850, Q = 17)
         # inner_signal = normalize_and_smooth(inner_signal, smoothing_window, max_value)
         # outer_signal = normalize_and_smooth(outer_signal, smoothing_window, max_value)
 
