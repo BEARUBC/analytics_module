@@ -55,5 +55,5 @@ class LoggerConfig:
         """
         config_dict = config.get(LOG_CONFIG_TEMPLATE)
         if print_log_config_to_stdout:
-            print(f"Initializing logging with config={json.dumps(config_dict | {"version": 1})}")
+            print(f'Initializing logging with config={json.dumps(config_dict | {"version": 1})}')
         dictConfig(config_dict | {"version": 1})
