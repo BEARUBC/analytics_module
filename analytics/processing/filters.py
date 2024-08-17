@@ -57,7 +57,8 @@ class EmgProcessor:
         # notch_filter = True # if we decide to use the notch filter
 
         def bandpass_filter(signal, sampling_freq, highpass_freq, lowpass_freq):
-            b, a = scipy.signal.butter(4, [highpass_freq, lowpass_freq],
+            Wn = [highpass_freq, lowpass_freq]/(sampling_freq/2)
+            b, a = scipy.signal.butter(4, Wn,
                                        btype='bandpass', fs=sampling_freq)
             filtered_signal = scipy.signal.filtfilt(b, a, signal)
             return filtered_signal
