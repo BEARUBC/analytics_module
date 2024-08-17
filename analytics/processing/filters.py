@@ -57,8 +57,7 @@ class EmgProcessor:
         # notch_filter = True # if we decide to use the notch filter
 
         def bandpass_filter(signal, sampling_freq, highpass_freq, lowpass_freq):
-            Wn = np.array([highpass_freq, lowpass_freq])/(sampling_freq/2)
-            b, a = scipy.signal.butter(4, Wn,
+            b, a = scipy.signal.butter(4, [highpass_freq, lowpass_freq],
                                        btype='bandpass', fs=sampling_freq)
             filtered_signal = scipy.signal.filtfilt(b, a, signal)
             return filtered_signal
@@ -85,13 +84,14 @@ class EmgProcessor:
         highpass_outer = 100
         lowpass_outer = 900
         max_value = 1
+        # sampling_freq depends on sleep time of the reading
         inner_signal = bandpass_filter(inner_signal, sampling_freq=2000,
                                         highpass_freq=highpass_inner, lowpass_freq=lowpass_inner)
         outer_signal = bandpass_filter(outer_signal, sampling_freq=2000,
                                         highpass_freq=highpass_outer, lowpass_freq=lowpass_outer)
         if notch_filter:
-            inner_signal = notch_filter(inner_signal, sampling_freq = 2000, f0 = 850, Q = 17)
-            outer_signal = notch_filter(outer_signal, sampling_freq = 2000, f0 = 850, Q = 17)
+            inner_signal = notch_filter(inner_signal, sampling_freq=2000, f0 = 850, Q = 17)
+            outer_signal = notch_filter(outer_signal, sampling_freq=2000, f0 = 850, Q = 17)
         
         inner_signal = normalize_and_smooth(inner_signal, smoothing_window=100, max_value=max_value)
         outer_signal = normalize_and_smooth(outer_signal, smoothing_window=100, max_value=max_value)
