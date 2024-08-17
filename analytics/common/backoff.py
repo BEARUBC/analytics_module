@@ -20,11 +20,11 @@ def exponential_backoff_decorator(base_delay_in_seconds, logger, max_retries=Non
                         result_func = func(*args, **kwargs)
                         return result_func
                     except Exception as e:
-                        logger.info(f"Attempt {retries + 1} failed: {e}")
+                        logger.info(f"Attempt {retries + 1} for {func.__name__} failed: {e}")
                         retries += 1
                         delay = (base_delay_in_seconds * 2 ** retries + random.uniform(0, 1))
-                        logger.info(f"Retrying in {delay:.2f} seconds...")
+                        logger.info(f"Retrying {func.__name__} in {delay:.2f} seconds...")
                         time.sleep(delay)
-                raise Exception("Max retries reached, operation failed.")
+                raise Exception(f"Max retries reached, {func.__name__} failed.")
         return wrapper
     return decorator
