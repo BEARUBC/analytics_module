@@ -77,7 +77,6 @@ class EmgProcessor:
 
         inner_signal = signals[0]
         outer_signal = signals[1]
-        print(f"length of inner signal: {len(inner_signal)}")
         
         highpass_inner = 100
         lowpass_inner = 900

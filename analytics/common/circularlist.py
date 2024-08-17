@@ -42,3 +42,6 @@ class CircularList(object):
         `np.array` method.
         """
         return np.array(self._data[self.index:] + self._data[:self.index])
+
+    def is_full(self) -> bool:
+        return len(self._data) == self.size
