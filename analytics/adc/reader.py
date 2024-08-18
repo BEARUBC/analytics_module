@@ -18,9 +18,9 @@ class AdcReader(BaseAdcReader):
         cs = digitalio.DigitalInOut(board.D22)
         self._mcp = MCP.MCP3008(spi, cs)
         # create an Ananlog input channel on pin 0
-        self._chan0 = AnalogIn(mcp, MCP.P0)
+        self._chan0 = AnalogIn(self._mcp, MCP.P0)
         # create an Ananlog input channel on pin 0
-        self._chan1 = AnalogIn(mcp, MCP.P1)
+        self._chan1 = AnalogIn(self._mcp, MCP.P1)
 
     def _read_adc(self, channel) -> Generator[float, None, None]:
         while True:
