@@ -5,7 +5,7 @@ from typing import Generator
 from analytics import config
 import numpy as np
 from abc import ABC, abstractmethod
-from analytics.common.backoff import exponential_backoff_decorator
+from analytics.common.decorators import retryable
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ class BaseAdcReader(ABC):
     def _read_adc(self, channel) -> Generator[float, None, None]:
         None
 
-    @exponential_backoff_decorator(base_delay_in_seconds=0.1, logger=logger)
+    @retryable(base_delay_in_seconds=0.1, logger=logger)
     def get_current_buffers(self):
         """Get current state of buffers, converted to an numpy Array"""
         inner, outer = self.inner_buf, self.outer_buf

@@ -2,7 +2,7 @@ import random
 import time
 import threading
 
-def exponential_backoff_decorator(base_delay_in_seconds, logger, max_retries=None):
+def retryable(base_delay_in_seconds, logger, max_retries=None):
     """
     A thread-safe retry decorator to enable retrying certain operations with an 
     exponential backoff.
