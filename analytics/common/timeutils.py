@@ -73,7 +73,9 @@ def stopwatch_ms() -> Generator[Callable[[], float], None, None]:
 
 
 @contextlib.contextmanager
-def multitimer() -> Generator[tuple[Callable[[], float], Callable[[], float]], None, None]:
+def multitimer() -> (
+    Generator[tuple[Callable[[], float], Callable[[], float]], None, None]
+):
     """
     Contextmanager yielding a union of both timer() and stopwatch(). Useful for instrumenting situations where
     we need both the total elapsed wall-clock time and a more detailed breakdown
@@ -86,7 +88,9 @@ def multitimer() -> Generator[tuple[Callable[[], float], Callable[[], float]], N
 
 
 @contextlib.contextmanager
-def multitimer_ms() -> Generator[tuple[Callable[[], float], Callable[[], float]], None, None]:
+def multitimer_ms() -> (
+    Generator[tuple[Callable[[], float], Callable[[], float]], None, None]
+):
     """
     Contextmanager yielding a union of both timer_ms() and stopwatch_ms(). Useful for instrumenting situations where
     we need both the total elapsed wall-clock time and a more detailed breakdown

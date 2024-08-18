@@ -9,6 +9,7 @@ from analytics.adc.basereader import BaseAdcReader
 
 logger = logging.getLogger(__name__)
 
+
 class AdcReader(BaseAdcReader):
     def __init__(self):
         super().__init__()

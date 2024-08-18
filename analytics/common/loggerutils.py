@@ -44,7 +44,10 @@ def simple_trace(
             success = True
         finally:
             kwargs_str = __format_kwargs(additional)
-            logger.log(log_level, f"{msg} completed success={success} took={t():.2f} ms{kwargs_str}")
+            logger.log(
+                log_level,
+                f"{msg} completed success={success} took={t():.2f} ms{kwargs_str}",
+            )
 
 
 @contextlib.contextmanager
@@ -92,7 +95,10 @@ def detail_trace(
             step("trace_overhead")
             kwargs_str = __format_kwargs(additional)
             stats_str = f" ({stats.summary()})"
-            logger.log(log_level, f"{msg} completed success={success} took={t():.2f} ms{stats_str}{kwargs_str}")
+            logger.log(
+                log_level,
+                f"{msg} completed success={success} took={t():.2f} ms{stats_str}{kwargs_str}",
+            )
 
 
 @contextlib.contextmanager
@@ -138,7 +144,10 @@ def threshold_trace(
             if final >= threshold_ms and logger.isEnabledFor(log_level):
                 kwargs_str = __format_kwargs(additional)
                 stats_str = f" ({stats.summary()})"
-                logger.log(log_level, f"{msg} completed success={success} took={t():.2f} ms{stats_str}{kwargs_str}")
+                logger.log(
+                    log_level,
+                    f"{msg} completed success={success} took={t():.2f} ms{stats_str}{kwargs_str}",
+                )
 
 
 def __format_kwargs(kwargs_dict: Optional[OrderedDict[str, str]]) -> str:

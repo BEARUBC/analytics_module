@@ -8,7 +8,7 @@ _log_handler_template = {
     "class": str,
     "level": confuse.Optional(str, None),
     "formatter": confuse.Optional(str, None),
-    "filters": confuse.Optional(confuse.StrSeq(), None)
+    "filters": confuse.Optional(confuse.StrSeq(), None),
 }
 
 _log_logger_template = {
@@ -23,7 +23,7 @@ _log_logger_template = {
                 "ERROR",
                 "CRTICAL",
                 "FATAL",
-                "NOTSET"
+                "NOTSET",
             ]
         ),
         None,
@@ -43,9 +43,12 @@ LOG_CONFIG_TEMPLATE = {
     "disable_existing_loggers": confuse.Optional(bool, {}),
 }
 
+
 class LoggerConfig:
     @classmethod
-    def configure_logging(cls, config: confuse.ConfigView, print_log_config_to_stdout: bool = False) -> None:
+    def configure_logging(
+        cls, config: confuse.ConfigView, print_log_config_to_stdout: bool = False
+    ) -> None:
         """
         Set global config based on the given config object. This serves as a thin wrapper around the
         standard `logging.config.dictConfig` method.
@@ -55,5 +58,7 @@ class LoggerConfig:
         """
         config_dict = config.get(LOG_CONFIG_TEMPLATE)
         if print_log_config_to_stdout:
-            print(f"Initializing logging with config={json.dumps(config_dict | {'version': 1})}")
+            print(
+                f"Initializing logging with config={json.dumps(config_dict | {'version': 1})}"
+            )
         dictConfig(config_dict | {"version": 1})

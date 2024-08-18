@@ -6,6 +6,7 @@ from analytics import config
 
 logger = logging.getLogger(__name__)
 
+
 def start_metrics_server():
     METRICS_PORT = config["metrics"]["port"].as_number()
     start_http_server(METRICS_PORT)

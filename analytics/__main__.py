@@ -16,14 +16,16 @@ if adc_config["use_mock_adc"]:
 else:
     from analytics.adc.reader import AdcReader as Reader
 
+
 def main():
     analytics.initialize_config_and_logging()
     adc_reader = Reader()
-    emg_processor = EmgProcessor(adc_reader)
     Thread(target=adc_reader.start_reading).start()
+    emg_processor = EmgProcessor(adc_reader)
     Thread(target=emg_processor.run_detect_activation_loop).start()
     Thread(target=start_metrics_server, daemon=True).start()
     EmgVisualizer(adc_reader, emg_processor).init_visualization()
-    
+
+
 if __name__ == "__main__":
     main()

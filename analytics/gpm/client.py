@@ -4,23 +4,30 @@ import analytics.protobuf.sgcp_pb2 as sgcp
 from analytics import config
 from analytics.gpm.constants import PREFIX_LENGTH_SIZE
 from analytics.common.loggerutils import detail_trace
+from analytics.common.decorators import retryable
 
 logger = logging.getLogger(__name__)
+
 
 class GpmOfflineError(Exception):
     pass
 
-class Client():
+
+class Client:
     """
     A simple class to manage the TCP connection to the GPM module and provide an easy-to-use
     interface to create requests from the SGCP proto definitions and decode GPM responses
     """
+
+    @retryable(base_delay_in_seconds=1, logger=logger, max_retries=3)
     def __init__(self):
         self.config = config["gpm"]
         logger.info(f"GPM client configs: {self.config}")
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socket.connect((self.config["host"].as_str(), self.config["port"].as_number()))
+            self.socket.connect(
+                (self.config["host"].as_str(), self.config["port"].as_number())
+            )
         except ConnectionRefusedError:
             raise GpmOfflineError("Connection refused. Is GPM up and running?")
         self.READ_BUFFER_SIZE = self.config["read_buffer_size"].as_number()
@@ -32,7 +39,11 @@ class Client():
         :param resource: Name of the SGCP resource
         :param task_code: Name of the task_code associated to `resource`
         """
-        with detail_trace(f"Sending request to GPM for resource={resource} with task_code={task_code}", logger, log_start=True) as trace_step:
+        with detail_trace(
+            f"Sending request to GPM for resource={resource} with task_code={task_code}",
+            logger,
+            log_start=True,
+        ) as trace_step:
             request = sgcp.Request()
             request.resource = sgcp.Resource.Value(resource)
             request.taskCode = task_code
@@ -45,10 +56,10 @@ class Client():
             data = self.recv()
             trace_step("received_response")
             return data
-        
+
     def recv(self, num_bytes=None) -> bytes:
         """
-        Reads num_bytes from underlying TCP stream. This is a blocking function and will wait until 
+        Reads num_bytes from underlying TCP stream. This is a blocking function and will wait until
         some data is available to be read.
 
         :param num_bytes: Number of bytes to be read from socket
@@ -56,6 +67,6 @@ class Client():
         if num_bytes is None:
             num_bytes = self.READ_BUFFER_SIZE
         return self.socket.recv(num_bytes)
-    
+
     def close(self):
         self.socket.close()

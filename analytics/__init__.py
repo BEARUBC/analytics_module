@@ -2,12 +2,12 @@ import logging
 import confuse
 from threading import RLock
 from analytics.configs import (
-    LOG_CONFIG_TEMPLATE, 
-    GPM_CLIENT_CONFIG_TEMPLATE, 
-    ADC_CONFIG_TEMPLATE, 
-    METRICS_CONFIG_TEMPLATE, 
-    PROCESSING_CONFIG_TEMPLATE, 
-    LoggerConfig
+    LOG_CONFIG_TEMPLATE,
+    GPM_CLIENT_CONFIG_TEMPLATE,
+    ADC_CONFIG_TEMPLATE,
+    METRICS_CONFIG_TEMPLATE,
+    PROCESSING_CONFIG_TEMPLATE,
+    LoggerConfig,
 )
 
 base_config_template = {
@@ -36,16 +36,18 @@ NEW_LINE = "\n"
 BYLINE = "Developed at UBC Bionics (http://www.ubcbionics.com)"
 VERSION_LINE = "Signal processing module for Grasp | Version 0.0.1"
 
+
 def _print_module_info():
     print(ANALYTICS_ASCII)
     print(VERSION_LINE)
     print(BYLINE)
     print(NEW_LINE)
 
+
 def initialize_config_and_logging():
     with _init_lock:
         global _config_initialized
-        if not _config_initialized: 
+        if not _config_initialized:
             # Read environment variable overrides in to config
             config.set_env()
             # Validate that config conforms to template

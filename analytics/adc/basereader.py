@@ -1,4 +1,4 @@
-import time 
+import time
 import logging
 from analytics.common.circularlist import CircularList
 from typing import Generator
@@ -9,11 +9,14 @@ from analytics.common.decorators import retryable
 
 logger = logging.getLogger(__name__)
 
+
 class BufferNotFull(Exception):
     pass
 
+
 class BaseAdcReader(ABC):
     """Base class encapsulating shared logic for the real and mock ADC readers"""
+
     def __init__(self):
         self.config = config["adc"]
         logger.info(f"ADC reader configs: {self.config}")
@@ -34,11 +37,11 @@ class BaseAdcReader(ABC):
         inner_adc_value = self._read_adc(self._chan0)
         outer_adc_value = self._read_adc(self._chan1)
         logger.info("Starting to read ADC values for both inner and outer muscles.")
-        while True:            
+        while True:
             self.inner_buf.append(next(inner_adc_value))
-            self.outer_buf.append(next(outer_adc_value)) 
-            time.sleep(self._sleep_duration)      
-    
+            self.outer_buf.append(next(outer_adc_value))
+            time.sleep(self._sleep_duration)
+
     @abstractmethod
     def _read_adc(self, channel) -> Generator[float, None, None]:
         None
@@ -47,6 +50,6 @@ class BaseAdcReader(ABC):
     def get_current_buffers(self):
         """Get current state of buffers, converted to an numpy Array"""
         inner, outer = self.inner_buf, self.outer_buf
-        if (not inner.is_full() or not outer.is_full()):
+        if not inner.is_full() or not outer.is_full():
             raise BufferNotFull("At least one of the buffers is not full yet")
         return (np.array(inner), np.array(outer))

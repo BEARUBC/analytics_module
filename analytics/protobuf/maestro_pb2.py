@@ -9,32 +9,28 @@ from google.protobuf import descriptor_pool as _descriptor_pool
 from google.protobuf import runtime_version as _runtime_version
 from google.protobuf import symbol_database as _symbol_database
 from google.protobuf.internal import builder as _builder
+
 _runtime_version.ValidateProtobufRuntimeVersion(
-    _runtime_version.Domain.PUBLIC,
-    5,
-    27,
-    0,
-    '',
-    'maestro.proto'
+    _runtime_version.Domain.PUBLIC, 5, 27, 0, "", "maestro.proto"
 )
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
 
 
-
-
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rmaestro.proto\x12\x0csgcp.maestro\"-\n\x08TaskData\x12\x0f\n\x07targets\x18\x01 \x03(\x05\x12\x10\n\x08\x63hannels\x18\x02 \x03(\x05*9\n\x04Task\x12\x12\n\x0eUNDEFINED_TASK\x10\x00\x12\r\n\tOPEN_FIST\x10\x01\x12\x0e\n\nCLOSE_FIST\x10\x02*.\n\x04Grip\x12\x12\n\x0eUNDEFINED_GRIP\x10\x00\x12\x08\n\x04OPEN\x10\x01\x12\x08\n\x04\x46IST\x10\x02\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
+    b'\n\rmaestro.proto\x12\x0csgcp.maestro"-\n\x08TaskData\x12\x0f\n\x07targets\x18\x01 \x03(\x05\x12\x10\n\x08\x63hannels\x18\x02 \x03(\x05*9\n\x04Task\x12\x12\n\x0eUNDEFINED_TASK\x10\x00\x12\r\n\tOPEN_FIST\x10\x01\x12\x0e\n\nCLOSE_FIST\x10\x02*.\n\x04Grip\x12\x12\n\x0eUNDEFINED_GRIP\x10\x00\x12\x08\n\x04OPEN\x10\x01\x12\x08\n\x04\x46IST\x10\x02\x62\x06proto3'
+)
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
-_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'maestro_pb2', _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, "maestro_pb2", _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
-  DESCRIPTOR._loaded_options = None
-  _globals['_TASK']._serialized_start=78
-  _globals['_TASK']._serialized_end=135
-  _globals['_GRIP']._serialized_start=137
-  _globals['_GRIP']._serialized_end=183
-  _globals['_TASKDATA']._serialized_start=31
-  _globals['_TASKDATA']._serialized_end=76
+    DESCRIPTOR._loaded_options = None
+    _globals["_TASK"]._serialized_start = 78
+    _globals["_TASK"]._serialized_end = 135
+    _globals["_GRIP"]._serialized_start = 137
+    _globals["_GRIP"]._serialized_end = 183
+    _globals["_TASKDATA"]._serialized_start = 31
+    _globals["_TASKDATA"]._serialized_end = 76
 # @@protoc_insertion_point(module_scope)

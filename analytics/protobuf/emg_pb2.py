@@ -9,30 +9,26 @@ from google.protobuf import descriptor_pool as _descriptor_pool
 from google.protobuf import runtime_version as _runtime_version
 from google.protobuf import symbol_database as _symbol_database
 from google.protobuf.internal import builder as _builder
+
 _runtime_version.ValidateProtobufRuntimeVersion(
-    _runtime_version.Domain.PUBLIC,
-    5,
-    27,
-    0,
-    '',
-    'emg.proto'
+    _runtime_version.Domain.PUBLIC, 5, 27, 0, "", "emg.proto"
 )
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
 
 
-
-
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\temg.proto\x12\x08sgcp.emg\"\n\n\x08TaskData*\x1a\n\x04Task\x12\x12\n\x0eUNDEFINED_TASK\x10\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
+    b'\n\temg.proto\x12\x08sgcp.emg"\n\n\x08TaskData*\x1a\n\x04Task\x12\x12\n\x0eUNDEFINED_TASK\x10\x00\x62\x06proto3'
+)
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
-_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'emg_pb2', _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, "emg_pb2", _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
-  DESCRIPTOR._loaded_options = None
-  _globals['_TASK']._serialized_start=35
-  _globals['_TASK']._serialized_end=61
-  _globals['_TASKDATA']._serialized_start=23
-  _globals['_TASKDATA']._serialized_end=33
+    DESCRIPTOR._loaded_options = None
+    _globals["_TASK"]._serialized_start = 35
+    _globals["_TASK"]._serialized_end = 61
+    _globals["_TASKDATA"]._serialized_start = 23
+    _globals["_TASKDATA"]._serialized_end = 33
 # @@protoc_insertion_point(module_scope)
