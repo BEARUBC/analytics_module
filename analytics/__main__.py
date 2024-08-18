@@ -8,9 +8,10 @@ from analytics.adc.visualization import EmgVisualizer
 from threading import Thread
 
 logger = logging.getLogger(__name__)
+adc_config = config["adc"]
 
-if config["adc"]["use_mock_adc"]:
-    logger.info("Using mock ADC")
+if adc_config["use_mock_adc"]:
+    logger.info("Using mock ADC.")
     from analytics.adc.mockreader import MockAdcReader as Reader
 else:
     from analytics.adc.reader import AdcReader as Reader
@@ -22,7 +23,7 @@ def main():
     Thread(target=adc_reader.start_reading).start()
     Thread(target=emg_processor.run_detect_activation_loop).start()
     Thread(target=start_metrics_server, daemon=True).start()
-    EmgVisualizer(adc_reader)
+    EmgVisualizer(adc_reader).init_visualization()
     
 if __name__ == "__main__":
     main()

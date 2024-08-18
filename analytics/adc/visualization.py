@@ -11,9 +11,11 @@ logger = logging.getLogger(__name__)
 class EmgVisualizer:
     """This class spawns a (near) real-time visualization of the incoming EMG values"""
     def __init__(self, adc_reader: BaseAdcReader):
+        self._adc_reader = adc_reader
+    
+    def init_visualization(self):
         logger.info("Initializing visualization.")
-        self.adc_reader = adc_reader
-        self.buffers = adc_reader.get_current_buffers()
+        self.buffers = self._adc_reader.get_current_buffers()
         self._num_graphs = 4
         self.anim = FuncAnimation(plt.gcf(), self._update, interval=1000, cache_frame_data=False)
         self._update_raw_data_plot()
@@ -42,7 +44,7 @@ class EmgVisualizer:
 
     def _update_raw_data_plot(self):
         """Fetches latest EMG data and updates the plot configurations with these values"""
-        self.buffers = self.adc_reader.get_current_buffers()
+        self.buffers = self._adc_reader.get_current_buffers()
         inner_buf, outer_buf = self.buffers
         # plot inner muscle EMG readings
         self._make_plot(inner_buf, 1, "Raw Inner EMG Data")
