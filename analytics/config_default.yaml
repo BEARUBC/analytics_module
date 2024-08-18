@@ -10,7 +10,7 @@ adc:
   sleep_between_reads_in_seconds: 0.01
   use_mock_adc: True
 processing:
-  sleep_between_processing_in_seconds: 5
+  sleep_between_processing_in_seconds: 0.1
 metrics:
   port: 9998
 log:
@@ -29,5 +29,5 @@ log:
       stream: "ext://sys.stdout"
   loggers:
     "":
-      level: INFO
+      level: WARN
       handlers: [console_handler]

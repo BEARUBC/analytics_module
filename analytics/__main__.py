@@ -23,7 +23,7 @@ def main():
     Thread(target=adc_reader.start_reading).start()
     Thread(target=emg_processor.run_detect_activation_loop).start()
     Thread(target=start_metrics_server, daemon=True).start()
-    EmgVisualizer(adc_reader).init_visualization()
+    EmgVisualizer(adc_reader, emg_processor).init_visualization()
     
 if __name__ == "__main__":
     main()

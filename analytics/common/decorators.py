@@ -20,7 +20,7 @@ def retryable(base_delay_in_seconds, logger, max_retries=None):
                         result_func = func(*args, **kwargs)
                         return result_func
                     except Exception as e:
-                        logger.info(f"Attempt {retries + 1} for {func.__name__} failed: {e}")
+                        logger.warn(f"Attempt {retries + 1} for {func.__name__} failed: {e}")
                         retries += 1
                         delay = (base_delay_in_seconds * 2 ** retries + random.uniform(0, 1))
                         logger.info(f"Retrying {func.__name__} in {delay:.2f} seconds...")

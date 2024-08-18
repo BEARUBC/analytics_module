@@ -7,13 +7,18 @@ from analytics.gpm.client import Client, GpmOfflineError
 from analytics.processing.constants import INNER_THRESHOLD, OUTER_THRESHOLD, CALIBRATION_DURATION_IN_SECONDS
 from analytics.common.loggerutils import detail_trace
 from analytics.gpm.constants import *
+from analytics.common.decorators import retryable
 from analytics import config
 
 logger = logging.getLogger(__name__)
 
 class EmgProcessor:    
+    """
+    The main signal processing class - it reads, processes, and analyzes raw EMG data 
+    to make a decision on the next state of the arm (i.e Open or Close).
+    """
     def __init__(self, adc_reader: MockAdcReader):
-        self.adc_reader = adc_reader
+        self._adc_reader = adc_reader
         try:
             self.gpm_client = Client()
         except GpmOfflineError as e:
@@ -25,13 +30,14 @@ class EmgProcessor:
         self.config = config["processing"]
         logger.info(f"Processing module configs: {self.config}")
         self._sleep_duration = self.config["sleep_between_processing_in_seconds"].as_number()
+        self._buffers = None
     
     def calibrate(self):
         def calibrate_threshold(duration, message):
             logger.info(message)
             end_time = time.time() + duration
             while time.time() < end_time:
-                inner_signal, outer_signal = self.adc_reader.get_current_buffers()
+                inner_signal, outer_signal = self._adc_reader.get_current_buffers()
                 inner_max_signal = max(inner_max_signal, np.max(inner_signal))
                 outer_max_signal = max(outer_max_signal, np.max(outer_signal))
         
@@ -100,9 +106,10 @@ class EmgProcessor:
     def run_detect_activation_loop(self):
         while True:
             with detail_trace("Processing signals", logger, log_start=False) as trace_step:
-                signal_buffer = self.adc_reader.get_current_buffers() # returns a 2d numpy array [[inner_signal], [outer_signal]]
+                signal_buffer = self._adc_reader.get_current_buffers() # returns a 2d numpy array [[inner_signal], [outer_signal]]
                 trace_step("Read signal buffer")
-                inner_signal, outer_signal = self.preprocess(signal_buffer)
+                self._buffers = self.preprocess(signal_buffer)
+                inner_signal, outer_signal = self._buffers
                 max_inner = np.max(inner_signal) if len(inner_signal) != 0 else 0 
                 max_outer = np.max(outer_signal) if len(outer_signal) != 0 else 0
                 if self.activation_state is False:
@@ -123,3 +130,10 @@ class EmgProcessor:
                         else:
                             logger.error("GPM connection failed earlier -- cannot send deactivation command to Grasp.")
             time.sleep(self._sleep_duration)
+    
+    @retryable(base_delay_in_seconds=0.1, logger=logger)
+    def get_current_buffers(self):
+        if self._buffers is None:
+            raise Exception("Buffers have not yet been initialized")
+        inner, outer = self._buffers
+        return (inner, outer)
