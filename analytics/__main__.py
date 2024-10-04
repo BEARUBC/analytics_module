@@ -22,9 +22,11 @@ def main():
     adc_reader = Reader()
     Thread(target=adc_reader.start_reading).start()
     emg_processor = EmgProcessor(adc_reader)
+    inner_max, outer_max = emg_processor.calibrate()
+    # emg_processor.calibrate()
     Thread(target=emg_processor.run_detect_activation_loop).start()
     Thread(target=start_metrics_server, daemon=True).start()
-    EmgVisualizer(adc_reader, emg_processor).init_visualization()
+    EmgVisualizer(adc_reader, emg_processor).init_visualization(inner_max, outer_max)
 
 
 if __name__ == "__main__":
