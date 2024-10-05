@@ -67,7 +67,7 @@ class EmgVisualizer:
         inner_buf, outer_buf = self._emg_processor.get_current_buffers()
         # plot inner muscle EMG readings
         self._make_plot(inner_buf, 3, "Processed Inner EMG Data")
-        plt.axhline(y = self.inner_max, color = 'r', linestyle = 'dashed', label = "Threshold")
+        plt.axhline(y = max(inner_buf), color = 'r', linestyle = 'dashed', label = "Threshold")
         # plot outer muscle EMG readings
         self._make_plot(outer_buf, 4, "Processed Outer EMG Data")
-        plt.axhline(y = self.outer_max, color = 'r', linestyle = 'dashed', label = "Threshold")
+        plt.axhline(y = max(outer_buf), color = 'r', linestyle = 'dashed', label = "Threshold")

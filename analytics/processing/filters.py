@@ -49,8 +49,8 @@ class EmgProcessor:
             end_time = time.time() + duration
             while time.time() < end_time:
                 inner_signal, outer_signal = self._adc_reader.get_current_buffers()
-                self.inner_max_signal = max(self.inner_max_signal, np.max(inner_signal)) * 0.8
-                self.outer_max_signal = max(self.outer_max_signal, np.max(outer_signal)) * 0.8
+                self.inner_max_signal = max(self.inner_max_signal, np.max(inner_signal))
+                self.outer_max_signal = max(self.outer_max_signal, np.max(outer_signal))
 
         calibrate_threshold(
             CALIBRATION_DURATION_IN_SECONDS,
@@ -129,11 +129,12 @@ class EmgProcessor:
             inner_signal = notch_filter(inner_signal, sampling_freq=2000, f0=850, Q=17)
             outer_signal = notch_filter(outer_signal, sampling_freq=2000, f0=850, Q=17)
 
+        # normalize the signal so that the range of values is in [0,1]
         inner_signal = normalize_and_smooth(
-            inner_signal, smoothing_window=100, max_value=self.max_inner # is this okay?? 
+            inner_signal, smoothing_window=100, max_value=self.inner_max_signal
         )
         outer_signal = normalize_and_smooth(
-            outer_signal, smoothing_window=100, max_value=self.max_outer # is this okay?? Iris says so
+            outer_signal, smoothing_window=100, max_value=self.outer_max_signal
         )
 
         return inner_signal, outer_signal
@@ -187,9 +188,5 @@ class EmgProcessor:
         if self._buffers is None:
             raise Exception("Buffers have not yet been initialized")
         inner, outer = self._buffers
-        return (inner, outer)
-        
-    def get_current_thresholds(self):
-        inner_threshold, outer_threshold = self.calibrate()
         return (inner, outer)
 
