@@ -190,3 +190,5 @@ class EmgProcessor:
         inner, outer = self._buffers
         return (inner, outer)
 
+    def get_threholds(self):
+        return self.inner_threshold, self.outer_threshold
