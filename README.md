@@ -5,7 +5,7 @@ This is the main analytics module. It serves as the "brain" of the arm in the se
 ```bash
 # Install poetry -- follow the instructions here: https://python-poetry.org/docs/#installation
 # Clone the repository
-git clone https://github.com/BEARUBC/analytics_module.git
+git clone git@github.com:BEARUBC/analytics_module.git
 
 # Run the following commands to initialize the `sgcp` submodule
 git submodule init
