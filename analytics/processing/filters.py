@@ -84,16 +84,17 @@ class EmgProcessor:
             filtered_signal = scipy.signal.filtfilt(b, a, signal)
             return filtered_signal
 
+        # rectify, normalize, smooth
         def normalize_and_smooth(
             signal, smoothing_window: int, max_value: int
         ) -> np.ndarray:
             rectified_signal = np.abs(signal)
+            normalized_signal = rectified_signal / max_value
             smoothed_signal = np.convolve(
-                rectified_signal,
+                normalized_signal,
                 np.ones(smoothing_window) / smoothing_window,
                 mode="valid",
             )
-            normalized_signal = smoothed_signal / max_value
             return normalized_signal
 
         def notch_filter(signal, sampling_freq, f0, Q):
@@ -108,10 +109,10 @@ class EmgProcessor:
         inner_signal = signals[0]
         outer_signal = signals[1]
 
-        highpass_inner = 100
-        lowpass_inner = 900
-        highpass_outer = 100
-        lowpass_outer = 900
+        highpass_inner = 10
+        lowpass_inner = 500
+        highpass_outer = 10
+        lowpass_outer = 500
         # sampling_freq depends on sleep time of the reading
         inner_signal = bandpass_filter(
             inner_signal,
@@ -128,7 +129,6 @@ class EmgProcessor:
         if notch_filter:
             inner_signal = notch_filter(inner_signal, sampling_freq=2000, f0=850, Q=17)
             outer_signal = notch_filter(outer_signal, sampling_freq=2000, f0=850, Q=17)
-
         # normalize the signal so that the range of values is in [0,1]
         inner_signal = normalize_and_smooth(
             inner_signal, smoothing_window=100, max_value=self.inner_max_signal
@@ -136,6 +136,7 @@ class EmgProcessor:
         outer_signal = normalize_and_smooth(
             outer_signal, smoothing_window=100, max_value=self.outer_max_signal
         )
+        
 
         return inner_signal, outer_signal
 
