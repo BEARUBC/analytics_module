@@ -5,6 +5,7 @@ from analytics.gpm.constants import *
 from analytics.metrics.exporter import start_metrics_server
 from analytics.processing.filters import EmgProcessor
 from analytics.adc.visualization import EmgVisualizer
+from analytics.adc.visualization import CalibrationVisualizer
 from threading import Thread
 
 logger = logging.getLogger(__name__)
@@ -22,9 +23,21 @@ def main():
     adc_reader = Reader()
     Thread(target=adc_reader.start_reading).start()
     emg_processor = EmgProcessor(adc_reader)
-    inner_max, outer_max = emg_processor.calibrate() # Initial calibration to get the maximum of signals
+
+    # the matplotlib GUI demands to be in the main thread
+    calibration_visualizer = CalibrationVisualizer(adc_reader)
+
+    # thus calibration needs to be done in another thread
+    calibration_thread = Thread(target=emg_processor.calibrate, args=(calibration_visualizer,))
+    calibration_thread.start()
+
+    calibration_visualizer.init_visualization() # calibration thread tells it when to stop
+
+    calibration_thread.join() # waits for the calibration to finish
+
+    inner_max, outer_max = emg_processor.get_maximums()
     inner_threshold, outer_threshold = emg_processor.get_thresholds()
-    # emg_processor.calibrate()
+    
     Thread(target=emg_processor.run_detect_activation_loop).start()
     Thread(target=start_metrics_server, daemon=True).start()
     EmgVisualizer(adc_reader, emg_processor).init_visualization(inner_max, outer_max, inner_threshold, outer_threshold)
