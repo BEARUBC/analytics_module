@@ -83,3 +83,64 @@ class EmgVisualizer:
         plt.axhline(y = self.outer_max*self.outer_threshold, color = 'r', linestyle = 'dashed', label = "Max")
         plt.axhline(y = self.outer_max*self.outer_threshold, color = 'g', linestyle = 'dashed', label = "Threshold")
         plt.axhline(y = self.outer_max*self.outer_lower_threshold, color = 'b', linestyle = 'dashed', label = "Threshold")
+
+'''
+seperate visualizer for the calibrations.
+It is almost the same as the EmgVisualizer, but with only the raw ADC 
+data plots and the ability to be closed after the calibration is finished.
+'''
+class CalibrationVisualizer:
+
+    def __init__(self, adc_reader: BaseAdcReader):
+        self._adc_reader = adc_reader
+        self._num_graphs = 2
+        self.inner_plot_on = True
+        self.outer_plot_on = True
+        
+    def init_visualization(self):        
+        logger.warn("Initializing visualization.")
+        self.anim = FuncAnimation(
+            plt.gcf(), self._update, interval=1000, cache_frame_data=False
+        )
+        self._update_raw_data_plot()
+        plt.tight_layout()
+        plt.show()
+
+    def inner_plot_only(self):
+        self.inner_plot_on = True
+        self.outer_plot_on = False
+
+    def outer_plot_only(self):
+        self.inner_plot_on = False
+        self.outer_plot_on = True
+
+    def stop_visualization(self):
+        plt.close('all')
+
+    def _update(self, _):
+        """Used by `matplotlib.animation.FuncAnimation` to update the plot each frame"""
+        self._clear()
+        self._update_raw_data_plot()
+
+    def _clear(self):
+        for i in range(self._num_graphs):
+            plt.subplot(GRAPH_DIMENSION_NROWS, GRAPH_DIMENSION_NCOLS, i + 1)
+            plt.cla()
+
+    def _make_plot(self, buffer, index, title):
+        plt.subplot(GRAPH_DIMENSION_NROWS, GRAPH_DIMENSION_NCOLS, index)
+        time_buf = np.array([i / 1000 for i in range(0, len(buffer), 1)])
+        plt.plot(time_buf, buffer)
+        plt.xlabel("Time (sec)")
+        plt.ylabel("EMG (a.u.)")
+        plt.title(title)
+
+    # modified from EmgVisualizer
+    def _update_raw_data_plot(self):
+
+        inner_buf, outer_buf = self._adc_reader.get_current_buffers()
+
+        if self.inner_plot_on:
+            self._make_plot(inner_buf, 1, "Raw Inner EMG Data")
+        if self.outer_plot_on:
+            self._make_plot(outer_buf, 2, "Raw Outer EMG Data")
