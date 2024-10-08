@@ -39,9 +39,11 @@ class EmgProcessor:
         self.config = config["processing"]
         logger.info(f"Processing module configs: {self.config}")
         self._sleep_duration = self.config[
-            "sleep_between_processing_in_seconds"
+             "sleep_between_processing_in_seconds"
         ].as_number()
-        self._buffers = None
+        self.sampling_freq = 1.0 / config["adc"]["sleep_between_reads_in_seconds"].as_number()
+        self._buffers = [[], []]
+        self._cache = [[], []]
 
     def calibrate(self):
         def calibrate_threshold(duration, message):
@@ -69,7 +71,7 @@ class EmgProcessor:
 
         return self.inner_max_signal, self.outer_max_signal
 
-    def preprocess(self, signals):
+    def preprocess(self, signal, lowpass, high_band, low_band, notch_on, cache_num):
         # TODO determine values for following parameters
         # sampling_freq
         # highpass (for inner and outer)
@@ -78,24 +80,22 @@ class EmgProcessor:
         # notch_filter = True # if we decide to use the notch filter
 
         def bandpass_filter(signal, sampling_freq, highpass_freq, lowpass_freq):
+            high = highpass_freq / (sampling_freq / 2.0)
+            low = lowpass_freq / (sampling_freq / 2.0)
             b, a = scipy.signal.butter(
-                4, [highpass_freq, lowpass_freq], btype="bandpass", fs=sampling_freq
+                4, [high, low], btype="bandpass"
             )
             filtered_signal = scipy.signal.filtfilt(b, a, signal)
             return filtered_signal
 
-        # rectify, normalize, smooth
-        def normalize_and_smooth(
-            signal, smoothing_window: int, max_value: int
-        ) -> np.ndarray:
-            rectified_signal = np.abs(signal)
-            normalized_signal = rectified_signal / max_value
-            smoothed_signal = np.convolve(
-                normalized_signal,
-                np.ones(smoothing_window) / smoothing_window,
-                mode="valid",
+        # smooth
+        def smooth(signal, sampling_freq, lowpass_freq):
+            low = lowpass_freq / (sampling_freq / 2.0)
+            b, a = scipy.signal.butter(
+                4, low, btype="lowpass"
             )
-            return normalized_signal
+            smoothed_signal = scipy.signal.filtfilt(b, a, signal)
+            return smoothed_signal
 
         def notch_filter(signal, sampling_freq, f0, Q):
             if f0 > sampling_freq / 2:
@@ -106,39 +106,26 @@ class EmgProcessor:
             notched_filtered_data = scipy.signal.filtfilt(b, a, signal)
             return notched_filtered_data
 
-        inner_signal = signals[0]
-        outer_signal = signals[1]
-
-        highpass_inner = 10
-        lowpass_inner = 500
-        highpass_outer = 10
-        lowpass_outer = 500
         # sampling_freq depends on sleep time of the reading
-        inner_signal = bandpass_filter(
-            inner_signal,
-            sampling_freq=2000,
-            highpass_freq=highpass_inner,
-            lowpass_freq=lowpass_inner,
+        # subtract the mean to centre the data around 0 Volts
+        signal = signal - np.mean(signal)
+        signal = bandpass_filter(
+            signal,
+            sampling_freq=self.sampling_freq,
+            highpass_freq=high_band,
+            lowpass_freq=low_band,
         )
-        outer_signal = bandpass_filter(
-            outer_signal,
-            sampling_freq=2000,
-            highpass_freq=highpass_outer,
-            lowpass_freq=lowpass_outer,
+        if notch_on:
+            signal = notch_filter(signal, sampling_freq=self.sampling_freq, f0=850, Q=17)
+        # rectify signal
+        signal = abs(signal)
+        # attach the current buffer to the cache for smoothing
+        self._cache[cache_num].extend(signal.tolist()) # probably not super efficient but more efficient than concatenate or append
+        self._cache[cache_num] = smooth(
+            self._cache[cache_num], sampling_freq=self.sampling_freq, lowpass_freq=lowpass
         )
-        if notch_filter:
-            inner_signal = notch_filter(inner_signal, sampling_freq=2000, f0=850, Q=17)
-            outer_signal = notch_filter(outer_signal, sampling_freq=2000, f0=850, Q=17)
-        # normalize the signal so that the range of values is in [0,1]
-        inner_signal = normalize_and_smooth(
-            inner_signal, smoothing_window=100, max_value=self.inner_max_signal
-        )
-        outer_signal = normalize_and_smooth(
-            outer_signal, smoothing_window=100, max_value=self.outer_max_signal
-        )
-        
-
-        return inner_signal, outer_signal
+        # return the last 'len(signal)' elements
+        return self._cache[cache_num][-len(signal):]
 
     def run_detect_activation_loop(self):
         while True:
@@ -149,8 +136,17 @@ class EmgProcessor:
                     self._adc_reader.get_current_buffers()
                 )  # returns a 2d numpy array [[inner_signal], [outer_signal]]
                 trace_step("Read signal buffer")
-                self._buffers = self.preprocess(signal_buffer)
+                self._buffers[0] = self.preprocess(
+                    signal=signal_buffer[0], lowpass=10, high_band=20, low_band=450, notch_on=False, cache_num=0
+                )
+                self._buffers[1] = self.preprocess(
+                    signal=signal_buffer[1], lowpass=10, high_band=20, low_band=450, notch_on=False, cache_num=1
+                )
                 inner_signal, outer_signal = self._buffers
+                if (len(self._cache[0]) >= 4 * len(inner_signal)):
+                    # remove the first bit of data from both buffers/caches it is getting too long
+                    self._cache[0] = self._cache[len(inner_signal):]
+                    self._cache[1] = self._cache[len(outer_signal):]
                 max_inner = np.max(inner_signal) if len(inner_signal) != 0 else 0
                 max_outer = np.max(outer_signal) if len(outer_signal) != 0 else 0
                 if self.activation_state is False: # anytime receive debug messages is when both are activated

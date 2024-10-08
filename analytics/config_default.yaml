@@ -10,7 +10,7 @@ adc:
   sleep_between_reads_in_seconds: 0.001
   use_mock_adc: False
 processing:
-  sleep_between_processing_in_seconds: 0.01
+  sleep_between_processing_in_seconds: 0 # changed from 0.01
 metrics:
   port: 9998
 log:

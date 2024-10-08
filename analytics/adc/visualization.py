@@ -66,12 +66,12 @@ class EmgVisualizer:
 
     def _update_processed_data_plot(self):
         """Fetches latest processed EMG data and updates the plot configurations with these values"""
-        inner_buf, outer_buf = self._emg_processor.get_current_buffers()
+        inner_buf_clean, outer_buf_clean = self._emg_processor.get_current_buffers()
         # plot inner muscle EMG readings
-        self._make_plot(inner_buf, 3, "Processed Inner EMG Data")
-        plt.axhline(y = max(inner_buf), color = 'r', linestyle = 'dashed', label = "Max")
+        self._make_plot(inner_buf_clean, 3, "Processed Inner EMG Data")
+        plt.axhline(y = max(inner_buf_clean), color = 'r', linestyle = 'dashed', label = "Max")
         plt.axhline(y = self.inner_threshold, color = 'g', linestyle = 'dashed', label = "Threshold")
         # plot outer muscle EMG readings
-        self._make_plot(outer_buf, 4, "Processed Outer EMG Data")
-        plt.axhline(y = max(outer_buf), color = 'r', linestyle = 'dashed', label = "Max")
+        self._make_plot(outer_buf_clean, 4, "Processed Outer EMG Data")
+        plt.axhline(y = max(outer_buf_clean), color = 'r', linestyle = 'dashed', label = "Max")
         plt.axhline(y = self.outer_threshold, color = 'g', linestyle = 'dashed', label = "Threshold")
