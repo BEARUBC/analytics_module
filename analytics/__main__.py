@@ -4,8 +4,7 @@ from analytics import config
 from analytics.gpm.constants import *
 from analytics.metrics.exporter import start_metrics_server
 from analytics.processing.filters import EmgProcessor
-from analytics.adc.visualization import EmgVisualizer
-from analytics.adc.visualization import CalibrationVisualizer
+from analytics.adc.visualization import CalibrationVisualizer, EmgVisualizer
 from threading import Thread
 
 logger = logging.getLogger(__name__)
