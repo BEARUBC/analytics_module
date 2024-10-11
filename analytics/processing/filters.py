@@ -47,7 +47,7 @@ class EmgProcessor:
         ].as_number()
         self._buffers = None
 
-    # calibrate needs to be able to tell the visualizer when to stop
+    # calibration visualizer is None if not being used
     def calibrate(self, calibration_visualizer):
         def calibrate_threshold(duration, message):
             logger.warn(message)
@@ -62,11 +62,13 @@ class EmgProcessor:
             CALIBRATION_DURATION_IN_SECONDS,
             f"Starting calibration... Relax arm for {CALIBRATION_DURATION_IN_SECONDS} seconds.",
         )
-        calibration_visualizer.inner_plot_only()
+        if calibration_visualizer is not None:
+            calibration_visualizer.inner_plot_only()
         calibrate_threshold(
             CALIBRATION_DURATION_IN_SECONDS, "Contract inner arm muscle."
         )
-        calibration_visualizer.outer_plot_only()
+        if calibration_visualizer is not None:
+            calibration_visualizer.outer_plot_only()
         calibrate_threshold(
             CALIBRATION_DURATION_IN_SECONDS, "Contract outer arm muscle."
         )
@@ -76,7 +78,8 @@ class EmgProcessor:
         logger.warn(f"Outer max: {self.outer_max_signal}")
 
         # adding the dependency causes a circular dependency error, so the type cannot be checked
-        calibration_visualizer.stop_visualization() 
+        if calibration_visualizer is not None:
+            calibration_visualizer.stop_visualization() 
 
         ''' 
         This function needs to run in its own thread and therefore cannot return the data.
