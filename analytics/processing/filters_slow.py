@@ -88,17 +88,16 @@ class EmgProcessor:
             filtered_signal = scipy.signal.filtfilt(b, a, signal)
             return filtered_signal
 
-        # rectify, normalize, smooth
         def normalize_and_smooth(
             signal, smoothing_window: int, max_value: int
         ) -> np.ndarray:
             rectified_signal = np.abs(signal)
-            normalized_signal = rectified_signal / max_value
             smoothed_signal = np.convolve(
-                normalized_signal,
+                rectified_signal,
                 np.ones(smoothing_window) / smoothing_window,
                 mode="valid",
             )
+            normalized_signal = smoothed_signal / max_value
             return normalized_signal
 
         def notch_filter(signal, sampling_freq, f0, Q):
@@ -110,8 +109,47 @@ class EmgProcessor:
             notched_filtered_data = scipy.signal.filtfilt(b, a, signal)
             return notched_filtered_data
 
-        inner_signal = signals[0]
-        outer_signal = signals[1]
+        def root_mean_square(signal, buffer_size):
+            # Ensure the signal is a numpy array
+            emg_signal = np.array(signal)
+
+            # Initialize an empty list to store the RMS values
+            rms_values = []
+
+            # Iterate over the signal in buffer-sized chunks
+            for i in range(0, len(emg_signal) - buffer_size + 1):
+                buffer = emg_signal[i:i + buffer_size]  # Get the buffer window
+                rms = np.sqrt(np.mean(np.square(buffer)))  # Compute RMS for the buffer
+                rms_values.append(rms)
+
+            return np.array(rms_values)
+
+        highpass_inner = 100
+        lowpass_inner = 900
+        highpass_outer = 100
+        lowpass_outer = 900
+        max_value = 1
+        # sampling_freq depends on sleep time of the reading
+
+        filtered_signals = []
+        for signal in signals:
+            #signal = bandpass_filter(
+            #    signal,
+            #    sampling_freq=2000,
+            #    highpass_freq=highpass_inner,
+            #    lowpass_freq=lowpass_inner,
+            #)
+            # if notch_filter:
+            #     signal = notch_filter(signal, sampling_freq=2000, f0=850, Q=17)
+            # signal = normalize_and_smooth(
+            #     signal, smoothing_window=100, max_value=max_value
+            # )
+            #signal = root_mean_square(signal, 5)
+
+            filtered_signals.append(signal)
+
+        inner_signal = filtered_signals[0]
+        outer_signal = filtered_signals[1]
 
         return inner_signal, outer_signal
 
@@ -140,11 +178,11 @@ class EmgProcessor:
                                 self.gpm_client.send_message(
                                     MAESTRO_RESOURCE, MAESTRO_OPEN_FIST
                                 )
-
                             else:
                                 logger.error( # change later
                                     "GPM connection failed earlier -- cannot send activation command to Grasp."
                                 )
+                        # time.sleep(0.5)
                         
 
                 else:
@@ -163,7 +201,8 @@ class EmgProcessor:
                                 logger.error(
                                     "GPM connection failed earlier -- cannot send deactivation command to Grasp."
                                 )
-            time.sleep(self._sleep_duration)
+                        # time.sleep(0.5)
+            # time.sleep(self._sleep_duration)
 
     @retryable(base_delay_in_seconds=0.1, logger=logger)
     def get_current_buffers(self):

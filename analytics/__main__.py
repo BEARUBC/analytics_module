@@ -28,6 +28,7 @@ def main():
     Thread(target=emg_processor.run_detect_activation_loop).start()
     Thread(target=start_metrics_server, daemon=True).start()
     EmgVisualizer(adc_reader, emg_processor).init_visualization(inner_max, outer_max, inner_threshold, outer_threshold)
+    EmgVisualizer(adc_reader, emg_processor).init_visualization(inner_max, outer_max, inner_threshold, outer_threshold)
 
 
 if __name__ == "__main__":

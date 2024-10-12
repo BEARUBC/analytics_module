@@ -7,8 +7,6 @@ from analytics.gpm.client import Client, GpmOfflineError
 from analytics.processing.constants import (
     INNER_THRESHOLD,
     OUTER_THRESHOLD,
-    INNER_LOWER_THRESHOLD,
-    OUTER_LOWER_THRESHOLD,
     CALIBRATION_DURATION_IN_SECONDS,
 )
 from analytics.common.loggerutils import detail_trace
@@ -17,7 +15,6 @@ from analytics.common.decorators import retryable
 from analytics import config
 
 logger = logging.getLogger(__name__)
-# logger.setLevel(logging.INFO)
 
 
 class EmgProcessor:
@@ -36,10 +33,6 @@ class EmgProcessor:
         self.activation_state = False
         self.inner_threshold = INNER_THRESHOLD
         self.outer_threshold = OUTER_THRESHOLD
-        self.inner_lower_threshold = INNER_LOWER_THRESHOLD
-        self.outer_lower_threshold = OUTER_LOWER_THRESHOLD
-        self.inner_max_signal = float('-inf')
-        self.outer_max_signal = float('-inf')
         self.config = config["processing"]
         logger.info(f"Processing module configs: {self.config}")
         self._sleep_duration = self.config[
@@ -49,12 +42,15 @@ class EmgProcessor:
 
     def calibrate(self):
         def calibrate_threshold(duration, message):
-            logger.warn(message)
+            logger.info(message)
             end_time = time.time() + duration
             while time.time() < end_time:
                 inner_signal, outer_signal = self._adc_reader.get_current_buffers()
-                self.inner_max_signal = max(self.inner_max_signal, np.max(inner_signal))
-                self.outer_max_signal = max(self.outer_max_signal, np.max(outer_signal))
+                inner_max_signal = max(inner_max_signal, np.max(inner_signal))
+                outer_max_signal = max(outer_max_signal, np.max(outer_signal))
+
+        inner_max_signal = float("-inf")
+        outer_max_signal = float("-inf")
 
         calibrate_threshold(
             CALIBRATION_DURATION_IN_SECONDS,
@@ -67,11 +63,11 @@ class EmgProcessor:
             CALIBRATION_DURATION_IN_SECONDS, "Contract outer arm muscle."
         )
 
-        logger.warn("Calibration completed.")
-        logger.warn(f"Inner max: {self.inner_max_signal}")
-        logger.warn(f"Outer max: {self.outer_max_signal}")
+        logger.info("Calibration completed.")
+        logger.info(f"Inner max: {inner_max_signal}")
+        logger.info(f"Outer max: {outer_max_signal}")
 
-        return self.inner_max_signal, self.outer_max_signal
+        return inner_max_signal, outer_max_signal
 
     def preprocess(self, signals):
         # TODO determine values for following parameters
@@ -88,17 +84,16 @@ class EmgProcessor:
             filtered_signal = scipy.signal.filtfilt(b, a, signal)
             return filtered_signal
 
-        # rectify, normalize, smooth
         def normalize_and_smooth(
             signal, smoothing_window: int, max_value: int
         ) -> np.ndarray:
             rectified_signal = np.abs(signal)
-            normalized_signal = rectified_signal / max_value
             smoothed_signal = np.convolve(
-                normalized_signal,
+                rectified_signal,
                 np.ones(smoothing_window) / smoothing_window,
                 mode="valid",
             )
+            normalized_signal = smoothed_signal / max_value
             return normalized_signal
 
         def notch_filter(signal, sampling_freq, f0, Q):
@@ -110,8 +105,47 @@ class EmgProcessor:
             notched_filtered_data = scipy.signal.filtfilt(b, a, signal)
             return notched_filtered_data
 
-        inner_signal = signals[0]
-        outer_signal = signals[1]
+        def root_mean_square(signal, buffer_size):
+            # Ensure the signal is a numpy array
+            emg_signal = np.array(emg_signal)
+
+            # Initialize an empty list to store the RMS values
+            rms_values = []
+
+            # Iterate over the signal in buffer-sized chunks
+            for i in range(0, len(emg_signal) - buffer_size + 1):
+                buffer = emg_signal[i:i + buffer_size]  # Get the buffer window
+                rms = np.sqrt(np.mean(np.square(buffer)))  # Compute RMS for the buffer
+                rms_values.append(rms)
+
+            return np.array(rms_values)
+
+        highpass_inner = 100
+        lowpass_inner = 900
+        highpass_outer = 100
+        lowpass_outer = 900
+        max_value = 1
+        # sampling_freq depends on sleep time of the reading
+
+        filtered_signals = []
+        for signal in signals:
+            signal = bandpass_filter(
+                signal,
+                sampling_freq=2000,
+                highpass_freq=highpass_inner,
+                lowpass_freq=lowpass_inner,
+            )
+            if notch_filter:
+                signal = notch_filter(signal, sampling_freq=2000, f0=850, Q=17)
+            # signal = normalize_and_smooth(
+            #     signal, smoothing_window=100, max_value=max_value
+            # )
+            signal = root_mean_square(signal, 50)
+
+            filtered_signals.append(signal)
+
+        inner_signal = filtered_signals[0]
+        outer_signal = filtered_signals[1]
 
         return inner_signal, outer_signal
 
@@ -128,42 +162,49 @@ class EmgProcessor:
                 inner_signal, outer_signal = self._buffers
                 max_inner = np.max(inner_signal) if len(inner_signal) != 0 else 0
                 max_outer = np.max(outer_signal) if len(outer_signal) != 0 else 0
-                if self.activation_state is False: # anytime receive debug messages is when both are activated
-                    if max_inner > self.inner_threshold*self.inner_max_signal:
-                        if max_outer < self.outer_lower_threshold*self.outer_max_signal:
-                            logger.warning(
-                                f"Received inner_signal={max_inner} greater than inner_threshold={self.inner_threshold}, sending activation."
-                            )
-                            self.activation_state = True
-                            print('grip activated')
-                            if self.gpm_client is not None:
-                                self.gpm_client.send_message(
-                                    MAESTRO_RESOURCE, MAESTRO_OPEN_FIST
-                                )
 
-                            else:
-                                logger.error( # change later
-                                    "GPM connection failed earlier -- cannot send activation command to Grasp."
-                                )
-                        
+                determine_activation(max_inner, max_outer)
 
-                else:
-                    if max_outer > self.outer_threshold*self.outer_max_signal:
-                        if max_inner < self.inner_lower_threshold*self.inner_max_signal:
-                            logger.warning(
-                                f"Received outer_signal={max_outer} greater than outer_threshold={self.outer_threshold}, sending de-activation."
-                            )
-                            self.activation_state = False
-                            print('grip de-activated')
-                            if self.gpm_client is not None:
-                                self.gpm_client.send_message(
-                                    MAESTRO_RESOURCE, MAESTRO_CLOSE_FIST
-                                )
-                            else:
-                                logger.error(
-                                    "GPM connection failed earlier -- cannot send deactivation command to Grasp."
-                                )
-            time.sleep(self._sleep_duration)
+            # time.sleep(self._sleep_duration) ##### ?
+
+    # Helper Functions
+    def determine_activation(max_inner, max_outer):
+        if self.activation_state is False:
+            if max_inner > self.inner_threshold:
+                logger.info(
+                    f"Received inner_signal={max_inner} greater than inner_threshold={self.inner_threshold}, sending activation."
+                )
+                contracts_arm()
+                time.sleep(1) # to prevent colliding signal.
+        else:
+            if max_outer > self.outer_threshold:
+                logger.info(
+                    f"Received outer_signal={max_outer} greater than outer_threshold={self.outer_threshold}, sending de-activation."
+                )
+                relaxes_arm()
+                time.sleep(1) # to prevent colliding signal.
+
+    def contracts_arm(self):
+        self.activation_state = True
+        if self.gpm_client is not None:
+            self.gpm_client.send_message(
+                MAESTRO_RESOURCE, MAESTRO_OPEN_FIST
+            )
+        else:
+            logger.error(
+                "GPM connection failed earlier -- cannot send activation command to Grasp."
+            )
+
+    def relaxes_arm(self):
+        self.activation_state = False
+        if self.gpm_client is not None:
+            self.gpm_client.send_message(
+                MAESTRO_RESOURCE, MAESTRO_CLOSE_FIST
+            )
+        else:
+            logger.error(
+                "GPM connection failed earlier -- cannot send deactivation command to Grasp."
+            )
 
     @retryable(base_delay_in_seconds=0.1, logger=logger)
     def get_current_buffers(self):
@@ -171,6 +212,3 @@ class EmgProcessor:
             raise Exception("Buffers have not yet been initialized")
         inner, outer = self._buffers
         return (inner, outer)
-
-    def get_thresholds(self):
-        return self.inner_threshold, self.outer_threshold

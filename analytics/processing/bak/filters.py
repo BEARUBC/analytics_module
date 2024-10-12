@@ -109,9 +109,32 @@ class EmgProcessor:
             b, a = scipy.signal.iirnotch(f0, Q, sampling_freq)
             notched_filtered_data = scipy.signal.filtfilt(b, a, signal)
             return notched_filtered_data
+            
+        filtered_signals = []
+        for signal in signals:
+            #signal = bandpass_filter(
+            #    signal,
+            #    sampling_freq=2000,
+            #    highpass_freq=highpass_inner,
+            #    lowpass_freq=lowpass_inner,
+            #)
+            # if notch_filter:
+            #     signal = notch_filter(signal, sampling_freq=2000, f0=850, Q=17)
+            # signal = normalize_and_smooth(
+            #     signal, smoothing_window=100, max_value=max_value
+            # )
+            #signal = root_mean_square(signal, 5)
+
+            filtered_signals.append(signal)
 
         inner_signal = signals[0]
         outer_signal = signals[1]
+
+        highpass_inner = 10
+        lowpass_inner = 500
+        highpass_outer = 10
+        lowpass_outer = 500
+        # sampling_freq depends on sleep time of the reading
 
         return inner_signal, outer_signal
 
@@ -140,11 +163,11 @@ class EmgProcessor:
                                 self.gpm_client.send_message(
                                     MAESTRO_RESOURCE, MAESTRO_OPEN_FIST
                                 )
-
                             else:
                                 logger.error( # change later
                                     "GPM connection failed earlier -- cannot send activation command to Grasp."
                                 )
+                        # time.sleep(0.5)
                         
 
                 else:
