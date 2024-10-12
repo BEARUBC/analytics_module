@@ -7,6 +7,8 @@ from analytics.gpm.client import Client, GpmOfflineError
 from analytics.processing.constants import (
     INNER_THRESHOLD,
     OUTER_THRESHOLD,
+    INNER_LOWER_THRESHOLD,
+    OUTER_LOWER_THRESHOLD,
     CALIBRATION_DURATION_IN_SECONDS,
 )
 from analytics.common.loggerutils import detail_trace
@@ -15,6 +17,8 @@ from analytics.common.decorators import retryable
 from analytics import config
 
 logger = logging.getLogger(__name__)
+
+
 # logger.setLevel(logging.INFO)
 
 
@@ -34,16 +38,16 @@ class EmgProcessor:
         self.activation_state = False
         self.inner_threshold = INNER_THRESHOLD
         self.outer_threshold = OUTER_THRESHOLD
+        self.inner_lower_threshold = INNER_LOWER_THRESHOLD
+        self.outer_lower_threshold = OUTER_LOWER_THRESHOLD
         self.inner_max_signal = float('-inf')
         self.outer_max_signal = float('-inf')
         self.config = config["processing"]
         logger.info(f"Processing module configs: {self.config}")
         self._sleep_duration = self.config[
-             "sleep_between_processing_in_seconds"
+            "sleep_between_processing_in_seconds"
         ].as_number()
-        self.sampling_freq = 1.0 / config["adc"]["sleep_between_reads_in_seconds"].as_number()
-        self._buffers = [[], []]
-        self._cache = [[], []]
+        self._buffers = None
 
     def calibrate(self):
         def calibrate_threshold(duration, message):
@@ -71,7 +75,7 @@ class EmgProcessor:
 
         return self.inner_max_signal, self.outer_max_signal
 
-    def preprocess(self, signal, lowpass, high_band, low_band, notch_on, cache_num):
+    def preprocess(self, signals):
         # TODO determine values for following parameters
         # sampling_freq
         # highpass (for inner and outer)
@@ -80,22 +84,24 @@ class EmgProcessor:
         # notch_filter = True # if we decide to use the notch filter
 
         def bandpass_filter(signal, sampling_freq, highpass_freq, lowpass_freq):
-            high = highpass_freq / (sampling_freq / 2.0)
-            low = lowpass_freq / (sampling_freq / 2.0)
             b, a = scipy.signal.butter(
-                4, [high, low], btype="bandpass"
+                4, [highpass_freq, lowpass_freq], btype="bandpass", fs=sampling_freq
             )
             filtered_signal = scipy.signal.filtfilt(b, a, signal)
             return filtered_signal
 
-        # smooth
-        def smooth(signal, sampling_freq, lowpass_freq):
-            low = lowpass_freq / (sampling_freq / 2.0)
-            b, a = scipy.signal.butter(
-                4, low, btype="lowpass"
+        # rectify, normalize, smooth
+        def normalize_and_smooth(
+                signal, smoothing_window: int, max_value: int
+        ) -> np.ndarray:
+            rectified_signal = np.abs(signal)
+            normalized_signal = rectified_signal / max_value
+            smoothed_signal = np.convolve(
+                normalized_signal,
+                np.ones(smoothing_window) / smoothing_window,
+                mode="valid",
             )
-            smoothed_signal = scipy.signal.filtfilt(b, a, signal)
-            return smoothed_signal
+            return normalized_signal
 
         def notch_filter(signal, sampling_freq, f0, Q):
             if f0 > sampling_freq / 2:
@@ -106,78 +112,57 @@ class EmgProcessor:
             notched_filtered_data = scipy.signal.filtfilt(b, a, signal)
             return notched_filtered_data
 
-        # sampling_freq depends on sleep time of the reading
-        # subtract the mean to centre the data around 0 Volts
-        signal = signal - np.mean(signal)
-        signal = bandpass_filter(
-            signal,
-            sampling_freq=self.sampling_freq,
-            highpass_freq=high_band,
-            lowpass_freq=low_band,
-        )
-        if notch_on:
-            signal = notch_filter(signal, sampling_freq=self.sampling_freq, f0=850, Q=17)
-        # rectify signal
-        signal = abs(signal)
-        # attach the current buffer to the cache for smoothing
-        self._cache[cache_num].extend(signal.tolist()) # probably not super efficient but more efficient than concatenate or append
-        self._cache[cache_num] = smooth(
-            self._cache[cache_num], sampling_freq=self.sampling_freq, lowpass_freq=lowpass
-        )
-        # return the last 'len(signal)' elements
-        return self._cache[cache_num][-len(signal):]
+        inner_signal = signals[0]
+        outer_signal = signals[1]
+
+        return inner_signal, outer_signal
 
     def run_detect_activation_loop(self):
         while True:
             with detail_trace(
-                "Processing signals", logger, log_start=False
+                    "Processing signals", logger, log_start=False
             ) as trace_step:
                 signal_buffer = (
                     self._adc_reader.get_current_buffers()
                 )  # returns a 2d numpy array [[inner_signal], [outer_signal]]
                 trace_step("Read signal buffer")
-                self._buffers[0] = self.preprocess(
-                    signal=signal_buffer[0], lowpass=10, high_band=20, low_band=450, notch_on=False, cache_num=0
-                )
-                self._buffers[1] = self.preprocess(
-                    signal=signal_buffer[1], lowpass=10, high_band=20, low_band=450, notch_on=False, cache_num=1
-                )
+                self._buffers = self.preprocess(signal_buffer)
                 inner_signal, outer_signal = self._buffers
-                if (len(self._cache[0]) >= 4 * len(inner_signal)):
-                    # remove the first bit of data from both buffers/caches it is getting too long
-                    self._cache[0] = self._cache[len(inner_signal):]
-                    self._cache[1] = self._cache[len(outer_signal):]
                 max_inner = np.max(inner_signal) if len(inner_signal) != 0 else 0
                 max_outer = np.max(outer_signal) if len(outer_signal) != 0 else 0
-                if self.activation_state is False: # anytime receive debug messages is when both are activated
-                    if max_inner > self.inner_threshold:
-                        logger.warning(
-                            f"Received inner_signal={max_inner} greater than inner_threshold={self.inner_threshold}, sending activation."
-                        )
-                        self.activation_state = True
-                        if self.gpm_client is not None:
-                            self.gpm_client.send_message(
-                                MAESTRO_RESOURCE, MAESTRO_OPEN_FIST
+                if self.activation_state is False:  # anytime receive debug messages is when both are activated
+                    if max_inner > self.inner_threshold * self.inner_max_signal:
+                        if max_outer < self.outer_lower_threshold * self.outer_max_signal:
+                            logger.warning(
+                                f"Received inner_signal={max_inner} greater than inner_threshold={self.inner_threshold}, sending activation."
                             )
-                        else:
-                            logger.error( # change later
-                                "GPM connection failed earlier -- cannot send activation command to Grasp."
-                            )
+                            self.activation_state = True
+                            print('grip activated')
+                            if self.gpm_client is not None:
+                                self.gpm_client.send_message(
+                                    MAESTRO_RESOURCE, MAESTRO_OPEN_FIST
+                                )
+                            else:
+                                logger.error(  # change later
+                                    "GPM connection failed earlier -- cannot send activation command to Grasp."
+                                )
 
                 else:
-                    if max_outer > self.outer_threshold:
-                        logger.warning(
-                            f"Received outer_signal={max_outer} greater than outer_threshold={self.outer_threshold}, sending de-activation."
-                        )
-                        self.activation_state = False
-                        if self.gpm_client is not None:
-                            self.gpm_client.send_message(
-                                MAESTRO_RESOURCE, MAESTRO_CLOSE_FIST
+                    if max_outer > self.outer_threshold * self.outer_max_signal:
+                        if max_inner < self.inner_lower_threshold * self.inner_max_signal:
+                            logger.warning(
+                                f"Received outer_signal={max_outer} greater than outer_threshold={self.outer_threshold}, sending de-activation."
                             )
-                        else:
-                            logger.error(
-                                "GPM connection failed earlier -- cannot send deactivation command to Grasp."
-                            )
+                            self.activation_state = False
+                            print('grip de-activated')
+                            if self.gpm_client is not None:
+                                self.gpm_client.send_message(
+                                    MAESTRO_RESOURCE, MAESTRO_CLOSE_FIST
+                                )
+                            else:
+                                logger.error(
+                                    "GPM connection failed earlier -- cannot send deactivation command to Grasp."
+                                )
             time.sleep(self._sleep_duration)
 
     @retryable(base_delay_in_seconds=0.1, logger=logger)
