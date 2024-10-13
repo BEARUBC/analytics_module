@@ -18,9 +18,7 @@ from analytics import config
 
 logger = logging.getLogger(__name__)
 
-
 # logger.setLevel(logging.INFO)
-
 
 class EmgProcessor:
     """
@@ -90,7 +88,6 @@ class EmgProcessor:
             filtered_signal = scipy.signal.filtfilt(b, a, signal)
             return filtered_signal
 
-        # rectify, normalize, smooth
         def normalize_and_smooth(
                 signal, smoothing_window: int, max_value: int
         ) -> np.ndarray:
@@ -130,6 +127,7 @@ class EmgProcessor:
                 inner_signal, outer_signal = self._buffers
                 max_inner = np.max(inner_signal) if len(inner_signal) != 0 else 0
                 max_outer = np.max(outer_signal) if len(outer_signal) != 0 else 0
+
                 if self.activation_state is False:  # anytime receive debug messages is when both are activated
                     if max_inner > self.inner_threshold * self.inner_max_signal:
                         if max_outer < self.outer_lower_threshold * self.outer_max_signal:
@@ -140,13 +138,12 @@ class EmgProcessor:
                             print('grip activated')
                             if self.gpm_client is not None:
                                 self.gpm_client.send_message(
-                                    MAESTRO_RESOURCE, MAESTRO_OPEN_FIST
+                                    MAESTRO_RESOURCE, MAESTRO_CLOSE_FIST
                                 )
                             else:
                                 logger.error(  # change later
                                     "GPM connection failed earlier -- cannot send activation command to Grasp."
                                 )
-
                 else:
                     if max_outer > self.outer_threshold * self.outer_max_signal:
                         if max_inner < self.inner_lower_threshold * self.inner_max_signal:
@@ -157,7 +154,7 @@ class EmgProcessor:
                             print('grip de-activated')
                             if self.gpm_client is not None:
                                 self.gpm_client.send_message(
-                                    MAESTRO_RESOURCE, MAESTRO_CLOSE_FIST
+                                    MAESTRO_RESOURCE, MAESTRO_OPEN_FIST
                                 )
                             else:
                                 logger.error(
