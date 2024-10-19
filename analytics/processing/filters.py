@@ -47,11 +47,13 @@ class EmgProcessor:
         ].as_number()
         self._buffers = None
 
-    def calibrate(self):
+    # calibration visualizer is None if not being used
+    def calibrate(self, calibration_visualizer):
         def calibrate_threshold(duration, message):
             logger.warn(message)
             end_time = time.time() + duration
             while time.time() < end_time:
+                time.sleep(0.01) # the main thread needs some time to update the visualization
                 inner_signal, outer_signal = self._adc_reader.get_current_buffers()
                 self.inner_max_signal = max(self.inner_max_signal, np.max(inner_signal))
                 self.outer_max_signal = max(self.outer_max_signal, np.max(outer_signal))
@@ -60,9 +62,13 @@ class EmgProcessor:
             CALIBRATION_DURATION_IN_SECONDS,
             f"Starting calibration... Relax arm for {CALIBRATION_DURATION_IN_SECONDS} seconds.",
         )
+        if calibration_visualizer is not None:
+            calibration_visualizer.inner_plot_only()
         calibrate_threshold(
             CALIBRATION_DURATION_IN_SECONDS, "Contract inner arm muscle."
         )
+        if calibration_visualizer is not None:
+            calibration_visualizer.outer_plot_only()
         calibrate_threshold(
             CALIBRATION_DURATION_IN_SECONDS, "Contract outer arm muscle."
         )
@@ -71,7 +77,15 @@ class EmgProcessor:
         logger.warn(f"Inner max: {self.inner_max_signal}")
         logger.warn(f"Outer max: {self.outer_max_signal}")
 
-        return self.inner_max_signal, self.outer_max_signal
+        # adding the dependency causes a circular dependency error, so the type cannot be checked
+        if calibration_visualizer is not None:
+            calibration_visualizer.stop_visualization() 
+
+        ''' 
+        This function needs to run in its own thread and therefore cannot return the data.
+        The max signals can be retrieved with get_maximums() after the calibration is complete.
+        '''
+        # return self.inner_max_signal, self.outer_max_signal
 
     def preprocess(self, signals):
         # TODO determine values for following parameters
@@ -174,3 +188,6 @@ class EmgProcessor:
 
     def get_thresholds(self):
         return self.inner_threshold, self.outer_threshold
+    
+    def get_maximums(self):
+        return self.inner_max_signal, self.outer_max_signal
