@@ -24,7 +24,6 @@ class EmgVisualizer:
 
     def init_visualization(self, inner_max, outer_max, inner_threshold, outer_threshold):
         logger.info("Initializing visualization.")
-        print("initiienrsdfgsdfgsdfsgsdgsgdfghsxfsegsesfgsdxfvdxgdrghsegdfbdrtfghs")
         self.inner_max = inner_max
         self.outer_max = outer_max
         self.inner_threshold = inner_threshold
