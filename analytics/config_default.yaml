@@ -1,16 +1,16 @@
 ### Default config for all projects
 gpm:
-  host: "127.0.0.1"
+  host: "localhost"
   port: 4760
   read_buffer_size: 1024
 adc:
-  inner_read_buffer_size: 2000
-  outer_read_buffer_size: 2000
+  inner_read_buffer_size: 200
+  outer_read_buffer_size: 200
   mock_reader_state_buffer_size: 100
-  sleep_between_reads_in_seconds: 0.01
-  use_mock_adc: True
+  sleep_between_reads_in_seconds: 0.001
+  use_mock_adc: False
 processing:
-  sleep_between_processing_in_seconds: 0.1
+  sleep_between_processing_in_seconds: 0 # changed from 0.01
 metrics:
   port: 9998
 log:
