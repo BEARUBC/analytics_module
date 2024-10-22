@@ -8,4 +8,4 @@ OUTER_LOWER_THRESHOLD = 1.5
 # Albert with myoware was ¬2000 baseline was low so could probably make lower
 
 # Calibration configs
-CALIBRATION_DURATION_IN_SECONDS = 3
+CALIBRATION_DURATION_IN_SECONDS = 5
