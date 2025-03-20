@@ -31,5 +31,4 @@ analytics/
 ├─ protobuf/     -> Protobuf generated definitions
 ```
 
-test
 
